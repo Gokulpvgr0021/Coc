@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mini Clash Clone</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #1a1a2e;
+            color: #fff;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1 { margin-bottom: 5px; color: #f39c12; }
+
+        /* Top HUD Bar */
+        .hud {
+            display: flex;
+            gap: 30px;
+            background: #16213e;
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: 2px solid #0f3460;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+
+        .resource {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .gold-icon { color: #f1c40f; }
+        .elixir-icon { color: #9b59b6; }
+
+        /* Game Layout */
+        .game-container {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+        }
+
+        /* The Grid Board */
+        #grid {
+            display: grid;
+            grid-template-columns: repeat(10, 50px);
+            grid-template-rows: repeat(10, 50px);
+            gap: 2px;
+            background: #0f3460;
+            padding: 5px;
+            border-radius: 8px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.4);
+        }
+
+        .cell {
+            width: 50px;
+            height: 50px;
+            background-color: #1f4068;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            text-align: center;
+            cursor: pointer;
+            user-select: none;
+            transition: background 0.2s;
+        }
+
+        .cell:hover {
+            background-color: #2e5288;
+        }
+
+        .cell.occupied {
+            background-color: #e94560;
+            color: white;
+            font-weight: bold;
+        }
+
+        .cell.highlight {
+            background-color: #f39c12 !important;
+        }
+
+        /* Shop Panel */
+        .shop {
+            background: #16213e;
+            padding: 15px;
+            border-radius: 8px;
+            border: 2px solid #0f3460;
+            width: 200px;
+        }
+
+        .shop h3 { margin-top: 0; border-bottom: 1px solid #0f3460; padding-bottom: 8px; }
+
+        .shop-item {
+            background: #1f4068;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            text-align: center;
+            transition: 0.2s;
+        }
+
+        .shop-item:hover {
+            background: #e94560;
+        }
+
+        .instructions {
+            margin-top: 15px;
+            font-size: 13px;
+            color: #aaa;
+            max-width: 520px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Mini Clash of Clans</h1>
+
+    <div class="hud">
+        <div class="resource">
+            <span class="gold-icon">🪙</span> Gold: <span id="gold-count">500</span>
+        </div>
+        <div class="resource">
+            <span class="elixir-icon">🧪</span> Elixir: <span id="elixir-count">500</span>
+        </div>
+    </div>
+
+    <div class="game-container">
+        <div id="grid"></div>
+
+        <div class="shop">
+            <h3>Shop</h3>
+            <div class="shop-item" onclick="selectBuilding('Town Hall', 100)">
+                <strong>Town Hall</strong><br><small>Cost: 100 Gold</small>
+            </div>
+            <div class="shop-item" onclick="selectBuilding('Cannon', 50)">
+                <strong>Cannon</strong><br><small>Cost: 50 Gold</small>
+            </div>
+            <div class="shop-item" onclick="selectBuilding('Gold Mine', 75)">
+                <strong>Gold Mine</strong><br><small>Cost: 75 Gold</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="instructions">
+        <strong>How to play:</strong> Click an item in the shop to select it, then click any empty tile on the grid to place it! Gold Mines will passively generate gold over time.
+    </div>
+
+    <script>
+        // Game State Variables
+        let gold = 500;
+        let elixir = 500;
+        let selectedBuildingType = null;
+        let selectedCost = 0;
+
+        const gridSize = 10;
+        const gridData = Array(gridSize * gridSize).fill(null); // Tracks placed buildings
+
+        // Initialize Grid UI
+        const gridElement = document.getElementById('grid');
+
+        function initGrid() {
+            gridElement.innerHTML = '';
+            for (let i = 0; i < gridSize * gridSize; i++) {
+                const cell = document.createElement('div');
+                cell.classList.add('cell');
+                cell.dataset.index = i;
+                cell.addEventListener('click', () => handleCellClick(i));
+                gridElement.appendChild(cell);
+            }
+        }
+
+        // Select building from shop
+        function selectBuilding(type, cost) {
+            if (gold >= cost) {
+                selectedBuildingType = type;
+                selectedCost = cost;
+                alert(`Selected: ${type}. Click an empty grid tile to place it.`);
+            } else {
+                alert("Not enough gold!");
+            }
+        }
+
+        // Handle placing buildings on the grid
+        function handleCellClick(index) {
+            if (!selectedBuildingType) {
+                alert("Select a building from the shop first!");
+                return;
+            }
+
+            if (gridData[index] !== null) {
+                alert("This space is already occupied!");
+                return;
+            }
+
+            // Deduct cost and place building
+            gold -= selectedCost;
+            updateHUD();
+
+            gridData[index] = selectedBuildingType;
+            
+            // Update UI cell
+            const cell = gridElement.children[index];
+            cell.classList.add('occupied');
+            cell.innerText = selectedBuildingType;
+
+            // Reset selection
+            selectedBuildingType = null;
+            selectedCost = 0;
+        }
+
+        function updateHUD() {
+            document.getElementById('gold-count').innerText = gold;
+            document.getElementById('elixir-count').innerText = elixir;
+        }
+
+        // Passive Resource Generator loop (Runs every 2 seconds)
+        setInterval(() => {
+            let mineCount = gridData.filter(b => b === 'Gold Mine').length;
+            if (mineCount > 0) {
+                gold += mineCount * 10; // Each mine adds 10 gold
+                updateHUD();
+            }
+        }, 2000);
+
+        // Start the game grid
+        initGrid();
+    </script>
+</body>
+</html>
