@@ -3,443 +3,319 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Clash of Clans - Advanced Web Edition</title>
+    <title>Subway Runner 3D-Style</title>
     <style>
-        :root {
-            --wood-dark: #3b220c;
-            --gold-color: #ffd700;
-            --elixir-color: #da70d6;
-            --ui-bg: rgba(30, 20, 10, 0.9);
-        }
-
         body {
             margin: 0;
             padding: 0;
-            background-color: #386f2b;
+            background-color: #1a1a2e;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
             overflow: hidden;
-            user-select: none;
             color: white;
+            user-select: none;
         }
 
-        /* Top Resource & Info Bar */
-        .top-bar {
+        h1 {
+            margin: 0 0 10px 0;
+            color: #f39c12;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .game-container {
+            position: relative;
+            width: 400px;
+            height: 600px;
+            background: linear-gradient(to bottom, #87CEEB, #2c3e50);
+            border: 4px solid #f1c40f;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+        }
+
+        /* Perspective Track Styling */
+        .track {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(
+                to bottom,
+                #34495e 0px,
+                #34495e 40px,
+                #2c3e50 40px,
+                #2c3e50 80px
+            );
+        }
+
+        .lane-divider {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        #divider-1 { left: 133px; }
+        #divider-2 { left: 266px; }
+
+        /* Player Character */
+        #player {
+            position: absolute;
+            bottom: 40px;
+            left: 175px; /* Middle lane starting pos */
+            width: 50px;
+            height: 80px;
+            background: #e74c3c;
+            border-radius: 25px 25px 10px 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            transition: left 0.15s ease-out, bottom 0.15s ease-out;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.4);
+            z-index: 10;
+        }
+
+        /* Obstacles */
+        .obstacle {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            background: #95a5a6;
+            border: 3px solid #7f8c8d;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+
+        /* HUD Overlay */
+        .hud {
             position: absolute;
             top: 15px;
             left: 15px;
-            display: flex;
-            gap: 15px;
-            z-index: 10;
-        }
-
-        .resource-box {
-            background: var(--ui-bg);
-            border: 3px solid #5a3d1c;
-            border-radius: 8px;
-            padding: 5px 12px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-weight: bold;
-            font-size: 14px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-        }
-
-        .builder-status {
-            background: var(--ui-bg);
-            border: 3px solid #5a3d1c;
-            border-radius: 8px;
-            padding: 5px 12px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 13px;
-        }
-
-        /* Profile & Avatar Panel (Right) */
-        .profile-panel {
-            position: absolute;
-            top: 15px;
             right: 15px;
-            background: var(--ui-bg);
-            border: 3px solid #5a3d1c;
-            border-radius: 12px;
-            padding: 10px 15px;
             display: flex;
-            align-items: center;
-            gap: 12px;
-            z-index: 10;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.4);
-        }
-
-        .avatar-container {
-            position: relative;
-            width: 55px;
-            height: 55px;
-            border-radius: 50%;
-            border: 3px solid #ffd700;
-            background: #d35400;
-            overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .avatar-img { font-size: 32px; }
-
-        .level-badge {
-            position: absolute;
-            bottom: -5px;
-            background: #27ae60;
-            border: 2px solid white;
-            font-size: 10px;
-            padding: 1px 5px;
-            border-radius: 8px;
+            justify-content: space-between;
+            font-size: 18px;
             font-weight: bold;
-        }
-
-        .player-info h4 {
-            margin: 0;
-            font-size: 16px;
-            color: #f1c40f;
+            z-index: 20;
             text-shadow: 1px 1px 2px black;
         }
 
-        .player-info p {
-            margin: 2px 0 0 0;
-            font-size: 11px;
-            color: #bdc3c7;
-        }
-
-        /* Main Game Arena */
-        .game-board {
-            position: relative;
-            width: 100vw;
-            height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .village-grid {
-            display: grid;
-            grid-template-columns: repeat(8, 70px);
-            grid-template-rows: repeat(8, 70px);
-            gap: 4px;
-            background: rgba(0, 0, 0, 0.2);
-            padding: 10px;
-            border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            transform: rotateX(25deg) rotateZ(-15deg);
-        }
-
-        .tile {
-            background-color: #489b38;
-            border: 1px dashed rgba(255,255,255,0.15);
-            border-radius: 6px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            font-size: 11px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: background 0.2s;
-            position: relative;
-        }
-
-        .tile:hover { background-color: #55b241; }
-
-        .building {
-            font-size: 26px;
-            filter: drop-shadow(2px 4px 4px rgba(0,0,0,0.5));
-        }
-
-        .building-label {
-            font-size: 9px;
-            background: rgba(0,0,0,0.6);
-            padding: 1px 4px;
-            border-radius: 4px;
-            margin-top: 2px;
-        }
-
-        /* Bottom Action Buttons */
-        .action-buttons {
+        /* Game Over Screen */
+        .game-over-screen {
             position: absolute;
-            bottom: 25px;
-            left: 25px;
-            display: flex;
-            gap: 10px;
-            z-index: 10;
-        }
-
-        .btn-action {
-            background: linear-gradient(to bottom, #f39c12, #d35400);
-            border: 3px solid #fff;
-            color: white;
-            font-weight: bold;
-            padding: 12px 20px;
-            border-radius: 10px;
-            font-size: 16px;
-            cursor: pointer;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.4);
-            text-shadow: 1px 1px 2px black;
-        }
-
-        .btn-action:hover { filter: brightness(1.1); }
-
-        /* Bottom Army / Training Queue Bar */
-        .bottom-hud {
-            position: absolute;
-            bottom: 25px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            gap: 10px;
-            background: var(--ui-bg);
-            border: 3px solid #5a3d1c;
-            padding: 8px 15px;
-            border-radius: 12px;
-            z-index: 10;
-            box-shadow: 0 6px 12px rgba(0,0,0,0.4);
-        }
-
-        .troop-slot {
-            width: 60px;
-            height: 65px;
-            background: #2c1e11;
-            border: 2px solid #8e6533;
-            border-radius: 8px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            cursor: pointer;
-            transition: transform 0.1s;
-        }
-
-        .troop-slot:active { transform: scale(0.95); }
-        .troop-icon { font-size: 24px; }
-        .troop-count {
-            position: absolute;
-            bottom: 2px;
-            right: 4px;
-            background: #c0392b;
-            color: white;
-            font-size: 10px;
-            font-weight: bold;
-            padding: 1px 4px;
-            border-radius: 4px;
-        }
-
-        /* Modal Popup System for Upgrades */
-        .modal-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100vw; height: 100vh;
-            background: rgba(0,0,0,0.6);
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
             display: none;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
-            z-index: 100;
-        }
-
-        .modal-card {
-            background: #2b1d0c;
-            border: 4px solid #8e6533;
-            padding: 20px;
-            border-radius: 12px;
-            width: 300px;
+            z-index: 30;
             text-align: center;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.6);
         }
 
-        .modal-card h3 { margin-top: 0; color: #f1c40f; }
-        .modal-btn {
+        .game-over-screen h2 { color: #e74c3c; font-size: 36px; margin-bottom: 10px; }
+        
+        .btn-restart {
             background: #27ae60;
-            border: 2px solid #fff;
+            border: none;
             color: white;
-            padding: 8px 15px;
+            padding: 12px 25px;
+            font-size: 18px;
             font-weight: bold;
-            border-radius: 6px;
+            border-radius: 8px;
             cursor: pointer;
             margin-top: 15px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
         }
-        .modal-btn:hover { background: #2ecc71; }
-        .close-modal {
-            background: #c0392b;
-            margin-left: 10px;
+        .btn-restart:hover { background: #2ecc71; }
+
+        .controls-hint {
+            margin-top: 10px;
+            font-size: 13px;
+            color: #bdc3c7;
+            text-align: center;
         }
     </style>
 </head>
 <body>
 
-    <!-- Top Resources & Builders HUD -->
-    <div class="top-bar">
-        <div class="resource-box"><span class="res-icon">🪙</span> <span id="gold-val">1250400</span></div>
-        <div class="resource-box"><span class="res-icon">🧪</span> <span id="elixir-val">840200</span></div>
-        <div class="resource-box"><span class="res-icon">💎</span> <span id="gem-val">524</span></div>
-        <div class="builder-status">👷 <span>1 / 2</span></div>
-    </div>
+    <h1>Subway Runner</h1>
 
-    <!-- Right Profile Panel -->
-    <div class="profile-panel">
-        <div class="avatar-container">
-            <span class="avatar-img">🧔</span>
-            <div class="level-badge">Lv. 24</div>
+    <div class="game-container" id="game-container">
+        <div class="track">
+            <div class="lane-divider" id="divider-1"></div>
+            <div class="lane-divider" id="divider-2"></div>
         </div>
-        <div class="player-info">
-            <h4>Chief_Max</h4>
-            <p>🏆 2,350 Trophies</p>
-        </div>
-    </div>
 
-    <!-- Main Game Arena -->
-    <div class="game-board">
-        <div class="village-grid" id="grid"></div>
-    </div>
+        <div class="hud">
+            <div>Score: <span id="score-val">0</span></div>
+            <div>Coins: <span id="coin-val">0</span></div>
+        </div>
 
-    <!-- Action Buttons -->
-    <div class="action-buttons">
-        <button class="btn-action" onclick="triggerAttack()">⚔️ Attack!</button>
-    </div>
+        <div id="player">🏃‍♂️</div>
 
-    <!-- Bottom Army Queue Bar -->
-    <div class="bottom-hud">
-        <div class="troop-slot" onclick="trainTroop('Barbarian')">
-            <div class="troop-icon">👱‍♂️</div>
-            <div class="troop-count" id="count-barb">41</div>
-        </div>
-        <div class="troop-slot" onclick="trainTroop('Archer')">
-            <div class="troop-icon">🏹</div>
-            <div class="troop-count" id="count-arch">62</div>
-        </div>
-        <div class="troop-slot" onclick="trainTroop('Giant')">
-            <div class="troop-icon">🧌</div>
-            <div class="troop-count" id="count-giant">3</div>
-        </div>
-        <div class="troop-slot" onclick="trainTroop('WallBreaker')">
-            <div class="troop-icon">💣</div>
-            <div class="troop-count" id="count-wb">1</div>
+        <div class="game-over-screen" id="game-over-screen">
+            <h2>WIPED OUT!</h2>
+            <p>Final Score: <span id="final-score">0</span></p>
+            <button class="btn-restart" onclick="resetGame()">Play Again</button>
         </div>
     </div>
 
-    <!-- Upgrade Modal Popup -->
-    <div class="modal-overlay" id="upgrade-modal">
-        <div class="modal-card">
-            <h3 id="modal-title">Building Info</h3>
-            <p id="modal-desc">Manage or upgrade your building structure.</p>
-            <button class="modal-btn" onclick="upgradeBuilding()">Upgrade (Cost: 50,000 🪙)</button>
-            <button class="modal-btn close-modal" onclick="closeModal()">Close</button>
-        </div>
+    <div class="controls-hint">
+        Use <b>Left/Right Arrows</b> to change lanes | <b>Up Arrow / Space</b> to jump | <b>Down Arrow</b> to duck
     </div>
 
     <script>
-        // State variables
-        let resources = { gold: 1250400, elixir: 840200, gems: 524 };
-        let troops = { Barbarian: 41, Archer: 62, Giant: 3, WallBreaker: 1 };
-        let activeTileIndex = null;
+        const lanes = [45, 175, 305]; // X coordinates for Left, Middle, Right lanes
+        let currentLane = 1; // Start in middle lane
+        let isJumping = false;
+        let isDucking = false;
+        let score = 0;
+        let coins = 0;
+        let gameSpeed = 4;
+        let isGameOver = false;
+        let obstacles = [];
 
-        const totalTiles = 64;
-        const gridElement = document.getElementById('grid');
+        const player = document.getElementById('player');
+        const container = document.getElementById('game-container');
+        const scoreDisplay = document.getElementById('score-val');
+        const coinDisplay = document.getElementById('coin-val');
+        const gameOverScreen = document.getElementById('game-over-screen');
+        const finalScoreDisplay = document.getElementById('final-score');
 
-        // Detailed buildings layout mapping
-        let villageBuildings = {
-            27: { name: 'Town Hall', icon: '🏛️', level: 7 },
-            18: { name: 'Cannon', icon: '💣', level: 5 },
-            22: { name: 'Archer Tower', icon: '🏹', level: 6 },
-            36: { name: 'Gold Mine', icon: '🪙', level: 8 },
-            45: { name: 'Elixir Collector', icon: '🧪', level: 7 },
-            5:  { name: 'Builder Hut', icon: '🛖', level: 1 },
-            54: { name: 'Army Camp', icon: '⛺', level: 5 }
-        };
+        // Handle Keyboard Controls
+        document.addEventListener('keydown', (e) => {
+            if (isGameOver) return;
 
-        function initVillage() {
-            gridElement.innerHTML = '';
-            for (let i = 0; i < totalTiles; i++) {
-                const tile = document.createElement('div');
-                tile.classList.add('tile');
-                
-                if (villageBuildings[i]) {
-                    const b = villageBuildings[i];
-                    tile.innerHTML = `
-                        <div class="building">${b.icon}</div>
-                        <div class="building-label">Lv.${b.level}</div>
-                    `;
+            if (e.key === 'ArrowLeft' && currentLane > 0) {
+                currentLane--;
+            } else if (e.key === 'ArrowRight' && currentLane < 2) {
+                currentLane++;
+            } else if ((e.key === 'ArrowUp' || e.key === ' ') && !isJumping && !isDucking) {
+                jump();
+            } else if (e.key === 'ArrowDown' && !isJumping) {
+                duck();
+            }
+            updatePlayerPosition();
+        });
+
+        function updatePlayerPosition() {
+            player.style.left = lanes[currentLane] + 'px';
+        }
+
+        function jump() {
+            isJumping = true;
+            player.style.bottom = '140px';
+            setTimeout(() => {
+                player.style.bottom = '40px';
+                isJumping = false;
+            }, 400);
+        }
+
+        function duck() {
+            isDucking = true;
+            player.style.height = '40px';
+            player.style.bottom = '40px';
+            player.innerText = '🙇‍♂️';
+            setTimeout(() => {
+                player.style.height = '80px';
+                player.innerText = '🏃‍♂️';
+                isDucking = false;
+            }, 500);
+        }
+
+        // Spawn Obstacles periodically
+        function spawnObstacle() {
+            if (isGameOver) return;
+
+            const lane = Math.floor(Math.random() * 3);
+            const obsElement = document.createElement('div');
+            obsElement.classList.add('obstacle');
+            obsElement.innerHTML = Math.random() > 0.5 ? '🚧' : '🛑';
+            
+            let obstacleObj = {
+                element: obsElement,
+                lane: lane,
+                y: -60 // Start above the screen view
+            };
+
+            obsElement.style.left = lanes[lane] + 'px';
+            obsElement.style.top = obstacleObj.y + 'px';
+            container.appendChild(obsElement);
+            obstacles.push(obstacleObj);
+
+            // Spawn next obstacle randomly between 1.2 to 2.5 seconds
+            let nextSpawnTime = Math.random() * 1300 + 1200;
+            setTimeout(spawnObstacle, nextSpawnTime);
+        }
+
+        // Main Game Loop
+        function updateGame() {
+            if (isGameOver) return;
+
+            // Increment Score over time
+            score += 1;
+            scoreDisplay.innerText = Math.floor(score / 10);
+
+            // Move Obstacles Downwards
+            for (let i = obstacles.length - 1; i >= 0; i--) {
+                let obs = obstacles[i];
+                obs.y += gameSpeed;
+                obs.element.style.top = obs.y + 'px';
+
+                // Collision Detection
+                // Player is near bottom (around y = 480px relative to container)
+                if (obs.y > 450 && obs.y < 540 && obs.lane === currentLane) {
+                    if (!isJumping) {
+                        triggerGameOver();
+                    }
                 }
-                
-                tile.addEventListener('click', () => handleTileClick(i));
-                gridElement.appendChild(tile);
-            }
-        }
 
-        function handleTileClick(index) {
-            activeTileIndex = index;
-            const modal = document.getElementById('upgrade-modal');
-            const title = document.getElementById('modal-title');
-            const desc = document.getElementById('modal-desc');
-
-            if (villageBuildings[index]) {
-                let b = villageBuildings[index];
-                title.innerText = `${b.name} (Level ${b.level})`;
-                desc.innerText = `Manage your ${b.name}. Upgrade it to increase efficiency and defense strength.`;
-            } else {
-                title.innerText = `Empty Plot`;
-                desc.innerText = `You can construct new defensive or resource structures here.`;
-            }
-            modal.style.display = 'flex';
-        }
-
-        function closeModal() {
-            document.getElementById('upgrade-modal').style.display = 'none';
-        }
-
-        function upgradeBuilding() {
-            if (activeTileIndex !== null && villageBuildings[activeTileIndex]) {
-                if (resources.gold >= 50000) {
-                    resources.gold -= 50000;
-                    villageBuildings[activeTileIndex].level++;
-                    updateHUD();
-                    alert("Upgrade started successfully!");
-                    closeModal();
-                    initVillage();
-                } else {
-                    alert("Not enough Gold to upgrade!");
+                // Remove obstacle if it goes off screen
+                if (obs.y > 600) {
+                    obs.element.remove();
+                    obstacles.splice(i, 1);
                 }
-            } else {
-                alert("Nothing to upgrade on this empty spot yet.");
-                closeModal();
             }
+
+            // Gradually increase game speed
+            gameSpeed += 0.001;
+
+            requestAnimationFrame(updateGame);
         }
 
-        function trainTroop(type) {
-            troops[type]++;
-            document.getElementById('count-barb').innerText = troops.Barbarian;
-            document.getElementById('count-arch').innerText = troops.Archer;
-            document.getElementById('count-giant').innerText = troops.Giant;
-            document.getElementById('count-wb').innerText = troops.WallBreaker;
+        function triggerGameOver() {
+            isGameOver = true;
+            finalScoreDisplay.innerText = Math.floor(score / 10);
+            gameOverScreen.style.display = 'flex';
         }
 
-        function updateHUD() {
-            document.getElementById('gold-val').innerText = resources.gold.toLocaleString();
-            document.getElementById('elixir-val').innerText = resources.elixir.toLocaleString();
-            document.getElementById('gem-val').innerText = resources.gems.toLocaleString();
+        function resetGame() {
+            obstacles.forEach(obs => obs.element.remove());
+            obstacles = [];
+            score = 0;
+            gameSpeed = 4;
+            currentLane = 1;
+            isGameOver = false;
+            gameOverScreen.style.display = 'none';
+            updatePlayerPosition();
+            updateGame();
+            setTimeout(spawnObstacle, 1000);
         }
 
-        function triggerAttack() {
-            alert("Finding a worthy multiplayer opponent match...");
-        }
-
-        // Passive Gold/Elixir loop generation from mines
-        setInterval(() => {
-            resources.gold += 120;
-            resources.elixir += 120;
-            updateHUD();
-        }, 3000);
-
-        // Initialize board
-        initVillage();
-        updateHUD();
+        // Initialize Game
+        updatePlayerPosition();
+        setTimeout(spawnObstacle, 1500);
+        requestAnimationFrame(updateGame);
     </script>
 </body>
 </html>
