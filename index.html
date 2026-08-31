@@ -2,9 +2,14 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Subway Runner 3D-Style</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Subway Runner - Mobile Touch Edition</title>
     <style>
+        * {
+            box-sizing: border-box;
+            touch-action: none; /* Prevents default mobile scrolling/zooming gestures */
+        }
+
         body {
             margin: 0;
             padding: 0;
@@ -21,15 +26,17 @@
         }
 
         h1 {
-            margin: 0 0 10px 0;
+            margin: 0 0 5px 0;
             color: #f39c12;
+            font-size: 22px;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
         }
 
         .game-container {
             position: relative;
-            width: 400px;
-            height: 600px;
+            width: 100%;
+            max-width: 400px;
+            height: 60vh;
             background: linear-gradient(to bottom, #87CEEB, #2c3e50);
             border: 4px solid #f1c40f;
             border-radius: 12px;
@@ -59,23 +66,23 @@
             background: rgba(255, 255, 255, 0.3);
         }
 
-        #divider-1 { left: 133px; }
-        #divider-2 { left: 266px; }
+        #divider-1 { left: 33%; }
+        #divider-2 { left: 66%; }
 
         /* Player Character */
         #player {
             position: absolute;
-            bottom: 40px;
-            left: 175px; /* Middle lane starting pos */
-            width: 50px;
-            height: 80px;
+            bottom: 30px;
+            left: 42%; /* Middle lane starting pos */
+            width: 45px;
+            height: 75px;
             background: #e74c3c;
-            border-radius: 25px 25px 10px 10px;
+            border-radius: 20px 20px 8px 8px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 32px;
-            transition: left 0.15s ease-out, bottom 0.15s ease-out;
+            font-size: 28px;
+            transition: bottom 0.15s ease-out;
             box-shadow: 0 5px 15px rgba(0,0,0,0.4);
             z-index: 10;
         }
@@ -83,30 +90,58 @@
         /* Obstacles */
         .obstacle {
             position: absolute;
-            width: 50px;
-            height: 50px;
+            width: 45px;
+            height: 45px;
             background: #95a5a6;
             border: 3px solid #7f8c8d;
             border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 24px;
+            font-size: 22px;
             box-shadow: 0 4px 8px rgba(0,0,0,0.3);
         }
 
         /* HUD Overlay */
         .hud {
             position: absolute;
-            top: 15px;
+            top: 10px;
             left: 15px;
             right: 15px;
             display: flex;
             justify-content: space-between;
-            font-size: 18px;
+            font-size: 16px;
             font-weight: bold;
             z-index: 20;
             text-shadow: 1px 1px 2px black;
+        }
+
+        /* On-Screen Touch Control Buttons */
+        .touch-controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 12px;
+            width: 100%;
+            max-width: 400px;
+            justify-content: center;
+        }
+
+        .control-btn {
+            flex: 1;
+            background: #16213e;
+            border: 2px solid #f1c40f;
+            color: white;
+            padding: 12px 0;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+
+        .control-btn:active {
+            background: #e94560;
         }
 
         /* Game Over Screen */
@@ -122,25 +157,24 @@
             text-align: center;
         }
 
-        .game-over-screen h2 { color: #e74c3c; font-size: 36px; margin-bottom: 10px; }
+        .game-over-screen h2 { color: #e74c3c; font-size: 32px; margin-bottom: 10px; }
         
         .btn-restart {
             background: #27ae60;
             border: none;
             color: white;
             padding: 12px 25px;
-            font-size: 18px;
+            font-size: 16px;
             font-weight: bold;
             border-radius: 8px;
             cursor: pointer;
             margin-top: 15px;
             box-shadow: 0 4px 10px rgba(0,0,0,0.3);
         }
-        .btn-restart:hover { background: #2ecc71; }
 
         .controls-hint {
-            margin-top: 10px;
-            font-size: 13px;
+            margin-top: 8px;
+            font-size: 11px;
             color: #bdc3c7;
             text-align: center;
         }
@@ -151,18 +185,21 @@
     <h1>Subway Runner</h1>
 
     <div class="game-container" id="game-container">
+        <!-- Track & Lanes -->
         <div class="track">
             <div class="lane-divider" id="divider-1"></div>
             <div class="lane-divider" id="divider-2"></div>
         </div>
 
+        <!-- HUD Scoreboard -->
         <div class="hud">
             <div>Score: <span id="score-val">0</span></div>
-            <div>Coins: <span id="coin-val">0</span></div>
         </div>
 
+        <!-- Player -->
         <div id="player">🏃‍♂️</div>
 
+        <!-- Game Over Modal -->
         <div class="game-over-screen" id="game-over-screen">
             <h2>WIPED OUT!</h2>
             <p>Final Score: <span id="final-score">0</span></p>
@@ -170,17 +207,24 @@
         </div>
     </div>
 
+    <!-- On-screen Touch Buttons for Mobile -->
+    <div class="touch-controls">
+        <button class="control-btn" onclick="moveLeft()">◀ Left</button>
+        <button class="control-btn" onclick="jump()">▲ Jump</button>
+        <button class="control-btn" onclick="duck()">▼ Duck</button>
+        <button class="control-btn" onclick="moveRight()">Right ▶</button>
+    </div>
+
     <div class="controls-hint">
-        Use <b>Left/Right Arrows</b> to change lanes | <b>Up Arrow / Space</b> to jump | <b>Down Arrow</b> to duck
+        <b>Swipe on screen</b> or use touch buttons below / Keyboard Arrow Keys
     </div>
 
     <script>
-        const lanes = [45, 175, 305]; // X coordinates for Left, Middle, Right lanes
-        let currentLane = 1; // Start in middle lane
+        const lanesPercent = [10, 42, 74]; // Lane X positions in percentages
+        let currentLane = 1; // Middle lane
         let isJumping = false;
         let isDucking = false;
         let score = 0;
-        let coins = 0;
         let gameSpeed = 4;
         let isGameOver = false;
         let obstacles = [];
@@ -188,52 +232,89 @@
         const player = document.getElementById('player');
         const container = document.getElementById('game-container');
         const scoreDisplay = document.getElementById('score-val');
-        const coinDisplay = document.getElementById('coin-val');
         const gameOverScreen = document.getElementById('game-over-screen');
         const finalScoreDisplay = document.getElementById('final-score');
 
-        // Handle Keyboard Controls
+        // Touch & Swipe Event Tracking Variables
+        let touchStartX = 0;
+        let touchStartY = 0;
+
+        container.addEventListener('touchstart', (e) => {
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+        }, {passive: true});
+
+        container.addEventListener('touchend', (e) => {
+            if (isGameOver) return;
+            let touchEndX = e.changedTouches[0].clientX;
+            let touchEndY = e.changedTouches[0].clientY;
+
+            let diffX = touchEndX - touchStartX;
+            let diffY = touchEndY - touchStartY;
+
+            // Check if horizontal or vertical swipe was longer
+            if (Math.abs(diffX) > Math.abs(diffY)) {
+                if (diffX > 30) {
+                    moveRight();
+                } else if (diffX < -30) {
+                    moveLeft();
+                }
+            } else {
+                if (diffY < -30) {
+                    jump();
+                } else if (diffY > 30) {
+                    duck();
+                }
+            }
+        }, {passive: true});
+
+        // Keyboard Support
         document.addEventListener('keydown', (e) => {
             if (isGameOver) return;
-
-            if (e.key === 'ArrowLeft' && currentLane > 0) {
-                currentLane--;
-            } else if (e.key === 'ArrowRight' && currentLane < 2) {
-                currentLane++;
-            } else if ((e.key === 'ArrowUp' || e.key === ' ') && !isJumping && !isDucking) {
-                jump();
-            } else if (e.key === 'ArrowDown' && !isJumping) {
-                duck();
-            }
-            updatePlayerPosition();
+            if (e.key === 'ArrowLeft') moveLeft();
+            if (e.key === 'ArrowRight') moveRight();
+            if (e.key === 'ArrowUp' || e.key === ' ') jump();
+            if (e.key === 'ArrowDown') duck();
         });
 
+        function moveLeft() {
+            if (currentLane > 0) currentLane--;
+            updatePlayerPosition();
+        }
+
+        function moveRight() {
+            if (currentLane < 2) currentLane++;
+            updatePlayerPosition();
+        }
+
         function updatePlayerPosition() {
-            player.style.left = lanes[currentLane] + 'px';
+            player.style.left = lanesPercent[currentLane] + '%';
         }
 
         function jump() {
+            if (isJumping || isDucking) return;
             isJumping = true;
-            player.style.bottom = '140px';
+            player.style.bottom = '130px';
             setTimeout(() => {
-                player.style.bottom = '40px';
+                player.style.bottom = '30px';
                 isJumping = false;
-            }, 400);
+            }, 350);
         }
 
         function duck() {
+            if (isJumping || isDucking) return;
             isDucking = true;
-            player.style.height = '40px';
-            player.style.bottom = '40px';
+            player.style.height = '35px';
+            player.style.bottom = '30px';
             player.innerText = '🙇‍♂️';
             setTimeout(() => {
-                player.style.height = '80px';
+                player.style.height = '75px';
                 player.innerText = '🏃‍♂️';
                 isDucking = false;
-            }, 500);
+            }, 450);
         }
 
-        // Spawn Obstacles periodically
+        // Spawn Obstacles
         function spawnObstacle() {
             if (isGameOver) return;
 
@@ -245,16 +326,15 @@
             let obstacleObj = {
                 element: obsElement,
                 lane: lane,
-                y: -60 // Start above the screen view
+                y: -50 // Starts above view area
             };
 
-            obsElement.style.left = lanes[lane] + 'px';
+            obsElement.style.left = lanesPercent[lane] + '%';
             obsElement.style.top = obstacleObj.y + 'px';
             container.appendChild(obsElement);
             obstacles.push(obstacleObj);
 
-            // Spawn next obstacle randomly between 1.2 to 2.5 seconds
-            let nextSpawnTime = Math.random() * 1300 + 1200;
+            let nextSpawnTime = Math.random() * 1200 + 1000;
             setTimeout(spawnObstacle, nextSpawnTime);
         }
 
@@ -262,34 +342,30 @@
         function updateGame() {
             if (isGameOver) return;
 
-            // Increment Score over time
             score += 1;
             scoreDisplay.innerText = Math.floor(score / 10);
 
-            // Move Obstacles Downwards
+            let containerHeight = container.clientHeight;
+
             for (let i = obstacles.length - 1; i >= 0; i--) {
                 let obs = obstacles[i];
                 obs.y += gameSpeed;
                 obs.element.style.top = obs.y + 'px';
 
-                // Collision Detection
-                // Player is near bottom (around y = 480px relative to container)
-                if (obs.y > 450 && obs.y < 540 && obs.lane === currentLane) {
+                // Collision detection bounds
+                if (obs.y > containerHeight - 130 && obs.y < containerHeight - 50 && obs.lane === currentLane) {
                     if (!isJumping) {
                         triggerGameOver();
                     }
                 }
 
-                // Remove obstacle if it goes off screen
-                if (obs.y > 600) {
+                if (obs.y > containerHeight) {
                     obs.element.remove();
                     obstacles.splice(i, 1);
                 }
             }
 
-            // Gradually increase game speed
-            gameSpeed += 0.001;
-
+            gameSpeed += 0.0012;
             requestAnimationFrame(updateGame);
         }
 
@@ -312,9 +388,9 @@
             setTimeout(spawnObstacle, 1000);
         }
 
-        // Initialize Game
+        // Initialization
         updatePlayerPosition();
-        setTimeout(spawnObstacle, 1500);
+        setTimeout(spawnObstacle, 1200);
         requestAnimationFrame(updateGame);
     </script>
 </body>
