@@ -3,17 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Subway Runner - High Graphics HD Edition</title>
+    <title>Realistic Match-3 Candy Game</title>
     <style>
         * {
             box-sizing: border-box;
-            touch-action: none;
+            touch-action: manipulation;
         }
 
         body {
             margin: 0;
             padding: 0;
-            background: radial-gradient(circle at center, #0f172a 0%, #020617 100%);
+            background: radial-gradient(circle at center, #4a0e4e 0%, #1a0524 100%);
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             display: flex;
             flex-direction: column;
@@ -26,384 +26,359 @@
         }
 
         h1 {
-            margin: 0 0 6px 0;
-            color: #38bdf8;
-            font-size: 22px;
-            text-transform: uppercase;
-            letter-spacing: 3px;
-            text-shadow: 0 0 12px rgba(56, 189, 248, 0.6);
-        }
-
-        .game-container {
-            position: relative;
-            width: 100%;
-            max-width: 380px;
-            height: 54vh;
-            background: linear-gradient(to bottom, #1e293b, #0f172a);
-            border: 4px solid #38bdf8;
-            border-radius: 18px;
-            overflow: hidden;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.9), inset 0 0 30px rgba(0, 0, 0, 0.7);
-        }
-
-        /* HD Isometric / Perspective Track */
-        .track {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(180deg, #1e1b4b 0%, #09090b 100%);
-        }
-
-        .lane-line {
-            position: absolute;
-            top: 0;
-            bottom: 0;
-            width: 4px;
-            background: rgba(56, 189, 248, 0.4);
-            box-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
-        }
-
-        #line-1 { left: 33%; }
-        #line-2 { left: 66%; }
-
-        /* High-Definition 3D Player Avatar */
-        #player {
-            position: absolute;
-            bottom: 20px;
-            left: 42%;
-            width: 44px;
-            height: 72px;
-            background: linear-gradient(135deg, #f43f5e, #be123c);
-            border: 2px solid #fda4af;
-            border-radius: 16px 16px 8px 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 28px;
-            transition: bottom 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            box-shadow: 0 10px 20px rgba(244, 63, 94, 0.5);
-            z-index: 10;
-        }
-
-        /* Perspective Scaling Obstacles */
-        .obstacle {
-            position: absolute;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            margin: 0 0 5px 0;
+            color: #ffcc00;
             font-size: 24px;
-            background: linear-gradient(135deg, #475569, #1e293b);
-            border: 2px solid #38bdf8;
-            border-radius: 10px;
-            box-shadow: 0 8px 16px rgba(0,0,0,0.6);
-            transform-origin: bottom center;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px rgba(255, 204, 0, 0.6);
         }
 
-        /* HD Glassmorphism HUD Overlay */
+        /* Top HUD Score & Moves Panel */
         .hud {
-            position: absolute;
-            top: 12px;
-            left: 12px;
-            right: 12px;
             display: flex;
-            justify-content: space-between;
+            gap: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 8px 18px;
+            border-radius: 12px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            margin-bottom: 12px;
             font-size: 15px;
             font-weight: bold;
-            z-index: 20;
-            background: rgba(15, 23, 42, 0.75);
-            padding: 8px 14px;
+            backdrop-filter: blur(5px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.4);
+        }
+
+        .hud span {
+            color: #ff99ff;
+        }
+
+        /* Game Board Container (8x8 Grid) */
+        .board-container {
+            position: relative;
+            background: rgba(0, 0, 0, 0.4);
+            padding: 8px;
+            border-radius: 16px;
+            border: 4px solid #ff66b2;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.8), inset 0 0 15px rgba(0,0,0,0.6);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(8, 44px);
+            grid-template-rows: repeat(8, 44px);
+            gap: 4px;
+        }
+
+        /* Candy Tile Styling */
+        .candy {
+            width: 44px;
+            height: 44px;
             border-radius: 10px;
-            border: 1px solid rgba(56, 189, 248, 0.3);
-            backdrop-filter: blur(6px);
-        }
-
-        /* Modern Touch Control Buttons */
-        .touch-controls {
             display: flex;
-            gap: 10px;
-            margin-top: 12px;
-            width: 100%;
-            max-width: 380px;
+            align-items: center;
             justify-content: center;
-        }
-
-        .control-btn {
-            flex: 1;
-            background: linear-gradient(to bottom, #1e293b, #0f172a);
-            border: 2px solid #38bdf8;
-            color: #38bdf8;
-            padding: 14px 0;
-            font-size: 14px;
-            font-weight: bold;
-            border-radius: 12px;
-            text-align: center;
+            font-size: 26px;
             cursor: pointer;
-            box-shadow: 0 6px 15px rgba(0,0,0,0.5);
-            transition: transform 0.1s, background 0.1s;
+            transition: transform 0.2s, background 0.2s;
+            box-shadow: inset 0 3px 6px rgba(255,255,255,0.4), 0 4px 8px rgba(0,0,0,0.3);
         }
 
-        .control-btn:active {
-            transform: scale(0.94);
-            background: #38bdf8;
-            color: #0f172a;
+        .candy:hover {
+            transform: scale(1.08);
         }
 
-        /* Cinematic Game Over Screen */
-        .game-over-screen {
+        .candy.selected {
+            border: 3px solid #ffffff;
+            transform: scale(1.1);
+            box-shadow: 0 0 15px #ffffff;
+        }
+
+        /* Game Over / Win Modal */
+        .modal {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(2, 6, 23, 0.92);
-            backdrop-filter: blur(10px);
+            background: rgba(26, 5, 36, 0.9);
+            backdrop-filter: blur(8px);
             display: none;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             z-index: 30;
             text-align: center;
+            border-radius: 12px;
         }
 
-        .game-over-screen h2 {
-            color: #f43f5e;
+        .modal h2 {
+            color: #ff3399;
             font-size: 32px;
             margin-bottom: 5px;
-            text-shadow: 0 0 20px rgba(244, 63, 94, 0.7);
+            text-shadow: 0 0 15px rgba(255, 51, 153, 0.7);
         }
         
         .btn-restart {
-            background: linear-gradient(to bottom, #0ea5e9, #0284c7);
-            border: 2px solid #bae6fd;
+            background: linear-gradient(to bottom, #ff3399, #cc0066);
+            border: 2px solid #ff99ff;
             color: white;
-            padding: 12px 30px;
+            padding: 10px 25px;
             font-size: 16px;
             font-weight: bold;
-            border-radius: 12px;
+            border-radius: 10px;
             cursor: pointer;
-            margin-top: 20px;
-            box-shadow: 0 8px 20px rgba(14, 165, 233, 0.5);
+            margin-top: 15px;
+            box-shadow: 0 6px 15px rgba(204, 0, 102, 0.5);
         }
         .btn-restart:hover { filter: brightness(1.1); }
 
-        .controls-hint {
-            margin-top: 8px;
-            font-size: 11px;
-            color: #64748b;
+        .hint {
+            margin-top: 12px;
+            font-size: 12px;
+            color: #cc99ff;
             text-align: center;
         }
     </style>
 </head>
 <body>
 
-    <h1>Subway Runner HD</h1>
+    <h1>Candy Crush Saga Lite</h1>
 
-    <div class="game-container" id="game-container">
-        <!-- HD Track Lanes -->
-        <div class="track">
-            <div class="lane-line" id="line-1"></div>
-            <div class="lane-line" id="line-2"></div>
-        </div>
+    <div class="hud">
+        <div>Score: <span id="score">0</span></div>
+        <div>Moves Left: <span id="moves">25</span></div>
+    </div>
 
-        <!-- Glass HUD -->
-        <div class="hud">
-            <div>🚀 Score: <span id="score-val">0</span></div>
-            <div>⚡ Velocity: <span id="speed-val">1.0x</span></div>
-        </div>
+    <div class="board-container">
+        <div class="grid" id="grid"></div>
 
-        <!-- Player Model -->
-        <div id="player">🏃‍♂️</div>
-
-        <!-- Game Over Modal -->
-        <div class="game-over-screen" id="game-over-screen">
-            <h2>CRASHED!</h2>
-            <p style="font-size: 16px; margin: 5px 0; color: #94a3b8;">Final Score: <span id="final-score" style="color: #38bdf8; font-weight: bold;">0</span></p>
-            <button class="btn-restart" onclick="resetGame()">Play Again</button>
+        <!-- Modal Screen -->
+        <div class="modal" id="modal">
+            <h2 id="modal-title">Game Over</h2>
+            <p>Final Score: <span id="final-score" style="color: #ffcc00; font-weight: bold;">0</span></p>
+            <button class="btn-restart" onclick="initGame()">Play Again</button>
         </div>
     </div>
 
-    <!-- On-screen Control Buttons -->
-    <div class="touch-controls">
-        <button class="control-btn" onclick="moveLeft()">◀ Left</button>
-        <button class="control-btn" onclick="jump()">▲ Jump</button>
-        <button class="control-btn" onclick="duck()">▼ Duck</button>
-        <button class="control-btn" onclick="moveRight()">Right ▶</button>
-    </div>
-
-    <div class="controls-hint">
-        Swipe on screen, tap buttons, or use Keyboard Arrow Keys / Spacebar
+    <div class="hint">
+        Click two adjacent candies to swap them and match 3 or more!
     </div>
 
     <script>
-        const lanesPercent = [12, 43, 74];
-        let currentLane = 1;
-        let isJumping = false;
-        let isDucking = false;
+        const width = 8;
+        const candies = ['🔴', '🔵', '🟢', '🟡', '🟣', '🟠']; // Candies representation
+        let board = [];
         let score = 0;
-        let gameSpeed = 3.5;
-        let isGameOver = false;
-        let obstacles = [];
+        let moves = 25;
+        let selectedIndex = null;
+        let isProcessing = false;
 
-        const player = document.getElementById('player');
-        const container = document.getElementById('game-container');
-        const scoreDisplay = document.getElementById('score-val');
-        const speedDisplay = document.getElementById('speed-val');
-        const gameOverScreen = document.getElementById('game-over-screen');
+        const gridElement = document.getElementById('grid');
+        const scoreDisplay = document.getElementById('score');
+        const movesDisplay = document.getElementById('moves');
+        const modal = document.getElementById('modal');
+        const modalTitle = document.getElementById('modal-title');
         const finalScoreDisplay = document.getElementById('final-score');
 
-        // Swipe Handling
-        let touchStartX = 0;
-        let touchStartY = 0;
+        function initGame() {
+            score = 0;
+            moves = 25;
+            isProcessing = false;
+            modal.style.display = 'none';
+            scoreDisplay.innerText = score;
+            movesDisplay.innerText = moves;
 
-        container.addEventListener('touchstart', (e) => {
-            touchStartX = e.touches[0].clientX;
-            touchStartY = e.touches[0].clientY;
-        }, {passive: true});
+            do {
+                board = [];
+                for (let i = 0; i < width * width; i++) {
+                    board.push(candies[Math.floor(Math.random() * candies.length)]);
+                }
+            } while (checkInitialMatches()); // Ensure no initial matches at start
 
-        container.addEventListener('touchend', (e) => {
-            if (isGameOver) return;
-            let touchEndX = e.changedTouches[0].clientX;
-            let touchEndY = e.changedTouches[0].clientY;
+            renderBoard();
+        }
 
-            let diffX = touchEndX - touchStartX;
-            let diffY = touchEndY - touchStartY;
-
-            if (Math.abs(diffX) > Math.abs(diffY)) {
-                if (diffX > 25) moveRight();
-                else if (diffX < -25) moveLeft();
-            } else {
-                if (diffY < -25) jump();
-                else if (diffY > 25) duck();
+        function checkInitialMatches() {
+            // Check row or col for preset matches
+            for (let i = 0; i < 64; i++) {
+                let row = Math.floor(i / width);
+                let col = i % width;
+                if (col < 6 && board[i] === board[i+1] && board[i] === board[i+2]) return true;
+                if (row < 6 && board[i] === board[i+width] && board[i] === board[i+width*2]) return true;
             }
-        }, {passive: true});
-
-        // Keyboard Inputs
-        document.addEventListener('keydown', (e) => {
-            if (isGameOver) return;
-            if (e.key === 'ArrowLeft') moveLeft();
-            if (e.key === 'ArrowRight') moveRight();
-            if (e.key === 'ArrowUp' || e.key === ' ') jump();
-            if (e.key === 'ArrowDown') duck();
-        });
-
-        function moveLeft() {
-            if (currentLane > 0) currentLane--;
-            updatePlayerPosition();
+            return false;
         }
 
-        function moveRight() {
-            if (currentLane < 2) currentLane++;
-            updatePlayerPosition();
+        function renderBoard() {
+            gridElement.innerHTML = '';
+            board.forEach((candy, index) => {
+                const cell = document.createElement('div');
+                cell.classList.add('candy');
+                cell.innerText = candy;
+                cell.dataset.index = index;
+                if (selectedIndex === index) {
+                    cell.classList.add('selected');
+                }
+                cell.addEventListener('click', () => handleCellClick(index));
+                gridElement.appendChild(cell);
+            });
         }
 
-        function updatePlayerPosition() {
-            player.style.left = lanesPercent[currentLane] + '%';
+        function handleCellClick(index) {
+            if (isProcessing || moves <= 0) return;
+
+            if (selectedIndex === null) {
+                selectedIndex = index;
+                renderBoard();
+            } else {
+                let firstIndex = selectedIndex;
+                selectedIndex = null;
+
+                if (isAdjacent(firstIndex, index)) {
+                    swapCandies(firstIndex, index);
+                    
+                    // Check if swap produces a match
+                    let matched = checkMatches();
+                    if (matched) {
+                        moves--;
+                        movesDisplay.innerText = moves;
+                        processMatches();
+                    } else {
+                        // Swap back if no match found (illegal move)
+                        swapCandies(firstIndex, index);
+                        renderBoard();
+                    }
+                } else {
+                    renderBoard();
+                }
+
+                checkGameOver();
+            }
         }
 
-        function jump() {
-            if (isJumping || isDucking) return;
-            isJumping = true;
-            player.style.bottom = '125px';
-            setTimeout(() => {
-                player.style.bottom = '20px';
-                isJumping = false;
-            }, 350);
+        function isAdjacent(i1, i2) {
+            let r1 = Math.floor(i1 / width), c1 = i1 % width;
+            let r2 = Math.floor(i2 / width), c2 = i2 % width;
+            return (Math.abs(r1 - r2) + Math.abs(c1 - c2) === 1);
         }
 
-        function duck() {
-            if (isJumping || isDucking) return;
-            isDucking = true;
-            player.style.height = '34px';
-            player.style.bottom = '20px';
-            player.innerText = '🙇‍♂️';
-            setTimeout(() => {
-                player.style.height = '72px';
-                player.innerText = '🏃‍♂️';
-                isDucking = false;
-            }, 450);
+        function swapCandies(i1, i2) {
+            let temp = board[i1];
+            board[i1] = board[i2];
+            board[i2] = temp;
+            renderBoard();
         }
 
-        function spawnObstacle() {
-            if (isGameOver) return;
-
-            const lane = Math.floor(Math.random() * 3);
-            const obsElement = document.createElement('div');
-            obsElement.classList.add('obstacle');
-            obsElement.innerHTML = Math.random() > 0.5 ? '🚧' : '🛑';
-            
-            let obstacleObj = {
-                element: obsElement,
-                lane: lane,
-                y: 0, // Starts at the top horizon line
-                progress: 0.05 // Perspective scale factor
-            };
-
-            container.appendChild(obsElement);
-            obstacles.push(obstacleObj);
-
-            let nextSpawnTime = Math.random() * 1000 + 800;
-            setTimeout(spawnObstacle, nextSpawnTime);
+        function checkMatches() {
+            let matchFound = false;
+            // We only need to return boolean for quick verification
+            for (let r = 0; r < width; r++) {
+                for (let c = 0; c < width - 2; c++) {
+                    let idx = r * width + c;
+                    if (board[idx] && board[idx] === board[idx+1] && board[idx] === board[idx+2]) return true;
+                }
+            }
+            for (let r = 0; r < width - 2; r++) {
+                for (let c = 0; c < width; c++) {
+                    let idx = r * width + c;
+                    if (board[idx] && board[idx] === board[idx+width] && board[idx] === board[idx+width*2]) return true;
+                }
+            }
+            return false;
         }
 
-        function updateGame() {
-            if (isGameOver) return;
+        function processMatches() {
+            isProcessing = true;
+            let clearedIndices = new Set();
 
-            score += 1;
-            scoreDisplay.innerText = Math.floor(score / 10);
-            speedDisplay.innerText = (gameSpeed / 3.5).toFixed(1) + 'x';
-
-            let containerHeight = container.clientHeight;
-
-            for (let i = obstacles.length - 1; i >= 0; i--) {
-                let obs = obstacles[i];
-                
-                // Realistic perspective scaling logic
-                obs.progress += 0.012 * (gameSpeed / 3.5);
-                let currentY = obs.progress * containerHeight;
-                let scale = 0.3 + (obs.progress * 0.9); // Grows larger as it approaches screen
-
-                obs.element.style.top = currentY + 'px';
-                obs.element.style.left = lanesPercent[obs.lane] + '%';
-                obs.element.style.transform = `scale(${scale})`;
-                obs.element.style.zIndex = Math.floor(obs.progress * 100);
-
-                // Collision detection zone at bottom screen
-                if (obs.progress > 0.78 && obs.progress < 0.96 && obs.lane === currentLane) {
-                    if (!isJumping) {
-                        triggerGameOver();
+            // Find horizontal matches
+            for (let r = 0; r < width; r++) {
+                for (let c = 0; c < width - 2; c++) {
+                    let idx = r * width + c;
+                    let val = board[idx];
+                    if (val && val === board[idx+1] && val === board[idx+2]) {
+                        clearedIndices.add(idx);
+                        clearedIndices.add(idx+1);
+                        clearedIndices.add(idx+2);
                     }
                 }
+            }
 
-                // Remove when past screen bounds
-                if (obs.progress > 1.05) {
-                    obs.element.remove();
-                    obstacles.splice(i, 1);
+            // Find vertical matches
+            for (let r = 0; r < width - 2; r++) {
+                for (let c = 0; c < width; c++) {
+                    let idx = r * width + c;
+                    let val = board[idx];
+                    if (val && val === board[idx+width] && val === board[idx+width*2]) {
+                        clearedIndices.add(idx);
+                        clearedIndices.add(idx+width);
+                        clearedIndices.add(idx+width*2);
+                    }
                 }
             }
 
-            gameSpeed += 0.0012;
-            requestAnimationFrame(updateGame);
+            if (clearedIndices.size > 0) {
+                score += clearedIndices.size * 10;
+                scoreDisplay.innerText = score;
+
+                clearedIndices.forEach(idx => board[idx] = null);
+                renderBoard();
+
+                setTimeout(() => {
+                    applyGravity();
+                }, 300);
+            } else {
+                isProcessing = false;
+            }
         }
 
-        function triggerGameOver() {
-            isGameOver = true;
-            finalScoreDisplay.innerText = Math.floor(score / 10);
-            gameOverScreen.style.display = 'flex';
+        function applyGravity() {
+            // Drop existing candies down
+            for (let c = 0; c < width; c++) {
+                for (let r = width - 1; r >= 0; r--) {
+                    let idx = r * width + c;
+                    if (board[idx] === null) {
+                        // Look up for the first available candy
+                        let found = false;
+                        for (let aboveR = r - 1; aboveR >= 0; aboveR--) {
+                            let aboveIdx = aboveR * width + c;
+                            if (board[aboveIdx] !== null) {
+                                board[idx] = board[aboveIdx];
+                                board[aboveIdx] = null;
+                                found = true;
+                                break;
+                            }
+                        }
+                        // If none found above, generate a new candy at top
+                        if (!found) {
+                            board[idx] = candies[Math.floor(Math.random() * candies.length)];
+                        }
+                    }
+                }
+            }
+
+            renderBoard();
+
+            // Check if cascading matches occurred
+            setTimeout(() => {
+                if (checkMatches()) {
+                    processMatches();
+                } else {
+                    isProcessing = false;
+                }
+            }, 300);
         }
 
-        function resetGame() {
-            obstacles.forEach(obs => obs.element.remove());
-            obstacles = [];
-            score = 0;
-            gameSpeed = 3.5;
-            currentLane = 1;
-            isGameOver = false;
-            gameOverScreen.style.display = 'none';
-            updatePlayerPosition();
-            updateGame();
-            setTimeout(spawnObstacle, 800);
+        function checkGameOver() {
+            if (moves <= 0) {
+                setTimeout(() => {
+                    modalTitle.innerText = "Out of Moves!";
+                    finalScoreDisplay.innerText = score;
+                    modal.style.display = 'flex';
+                }, 400);
+            }
         }
 
-        updatePlayerPosition();
-        setTimeout(spawnObstacle, 800);
-        requestAnimationFrame(updateGame);
+        // Initialize game on load
+        initGame();
     </script>
 </body>
 </html>
