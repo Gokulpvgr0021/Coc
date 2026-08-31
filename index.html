@@ -3,19 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Clash of Clans Web Prototype</title>
+    <title>Clash of Clans - Advanced Web Edition</title>
     <style>
         :root {
             --wood-dark: #3b220c;
             --gold-color: #ffd700;
             --elixir-color: #da70d6;
-            --ui-bg: rgba(30, 20, 10, 0.85);
+            --ui-bg: rgba(30, 20, 10, 0.9);
         }
 
         body {
             margin: 0;
             padding: 0;
-            background-color: #386f2b; /* Grass green background */
+            background-color: #386f2b;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             overflow: hidden;
             user-select: none;
@@ -45,8 +45,15 @@
             box-shadow: 0 4px 6px rgba(0,0,0,0.3);
         }
 
-        .res-icon {
-            font-size: 18px;
+        .builder-status {
+            background: var(--ui-bg);
+            border: 3px solid #5a3d1c;
+            border-radius: 8px;
+            padding: 5px 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
         }
 
         /* Profile & Avatar Panel (Right) */
@@ -78,9 +85,7 @@
             justify-content: center;
         }
 
-        .avatar-img {
-            font-size: 32px;
-        }
+        .avatar-img { font-size: 32px; }
 
         .level-badge {
             position: absolute;
@@ -106,7 +111,7 @@
             color: #bdc3c7;
         }
 
-        /* Main Game Arena (Isometric feel) */
+        /* Main Game Arena */
         .game-board {
             position: relative;
             width: 100vw;
@@ -143,12 +148,10 @@
             position: relative;
         }
 
-        .tile:hover {
-            background-color: #55b241;
-        }
+        .tile:hover { background-color: #55b241; }
 
         .building {
-            font-size: 28px;
+            font-size: 26px;
             filter: drop-shadow(2px 4px 4px rgba(0,0,0,0.5));
         }
 
@@ -160,10 +163,35 @@
             margin-top: 2px;
         }
 
+        /* Bottom Action Buttons */
+        .action-buttons {
+            position: absolute;
+            bottom: 25px;
+            left: 25px;
+            display: flex;
+            gap: 10px;
+            z-index: 10;
+        }
+
+        .btn-action {
+            background: linear-gradient(to bottom, #f39c12, #d35400);
+            border: 3px solid #fff;
+            color: white;
+            font-weight: bold;
+            padding: 12px 20px;
+            border-radius: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+            text-shadow: 1px 1px 2px black;
+        }
+
+        .btn-action:hover { filter: brightness(1.1); }
+
         /* Bottom Army / Training Queue Bar */
         .bottom-hud {
             position: absolute;
-            bottom: 20px;
+            bottom: 25px;
             left: 50%;
             transform: translateX(-50%);
             display: flex;
@@ -191,14 +219,8 @@
             transition: transform 0.1s;
         }
 
-        .troop-slot:active {
-            transform: scale(0.95);
-        }
-
-        .troop-icon {
-            font-size: 24px;
-        }
-
+        .troop-slot:active { transform: scale(0.95); }
+        .troop-icon { font-size: 24px; }
         .troop-count {
             position: absolute;
             bottom: 2px;
@@ -211,51 +233,56 @@
             border-radius: 4px;
         }
 
-        /* Action Buttons (Attack / Shield) */
-        .action-buttons {
-            position: absolute;
-            bottom: 20px;
-            left: 20px;
-            display: flex;
-            gap: 10px;
-            z-index: 10;
+        /* Modal Popup System for Upgrades */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.6);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
         }
 
-        .btn-action {
-            background: linear-gradient(to bottom, #f39c12, #d35400);
-            border: 3px solid #fff;
+        .modal-card {
+            background: #2b1d0c;
+            border: 4px solid #8e6533;
+            padding: 20px;
+            border-radius: 12px;
+            width: 300px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.6);
+        }
+
+        .modal-card h3 { margin-top: 0; color: #f1c40f; }
+        .modal-btn {
+            background: #27ae60;
+            border: 2px solid #fff;
             color: white;
+            padding: 8px 15px;
             font-weight: bold;
-            padding: 12px 20px;
-            border-radius: 10px;
-            font-size: 16px;
+            border-radius: 6px;
             cursor: pointer;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.4);
-            text-shadow: 1px 1px 2px black;
+            margin-top: 15px;
         }
-
-        .btn-action:hover {
-            filter: brightness(1.1);
+        .modal-btn:hover { background: #2ecc71; }
+        .close-modal {
+            background: #c0392b;
+            margin-left: 10px;
         }
     </style>
 </head>
 <body>
 
+    <!-- Top Resources & Builders HUD -->
     <div class="top-bar">
-        <div class="resource-box">
-            <span class="res-icon">🪙</span>
-            <span id="gold-val">1,250,400</span>
-        </div>
-        <div class="resource-box">
-            <span class="res-icon">🧪</span>
-            <span id="elixir-val">840,200</span>
-        </div>
-        <div class="resource-box">
-            <span class="res-icon">💎</span>
-            <span id="gem-val">524</span>
-        </div>
+        <div class="resource-box"><span class="res-icon">🪙</span> <span id="gold-val">1250400</span></div>
+        <div class="resource-box"><span class="res-icon">🧪</span> <span id="elixir-val">840200</span></div>
+        <div class="resource-box"><span class="res-icon">💎</span> <span id="gem-val">524</span></div>
+        <div class="builder-status">👷 <span>1 / 2</span></div>
     </div>
 
+    <!-- Right Profile Panel -->
     <div class="profile-panel">
         <div class="avatar-container">
             <span class="avatar-img">🧔</span>
@@ -267,15 +294,17 @@
         </div>
     </div>
 
+    <!-- Main Game Arena -->
     <div class="game-board">
-        <div class="village-grid" id="grid">
-            </div>
+        <div class="village-grid" id="grid"></div>
     </div>
 
+    <!-- Action Buttons -->
     <div class="action-buttons">
         <button class="btn-action" onclick="triggerAttack()">⚔️ Attack!</button>
     </div>
 
+    <!-- Bottom Army Queue Bar -->
     <div class="bottom-hud">
         <div class="troop-slot" onclick="trainTroop('Barbarian')">
             <div class="troop-icon">👱‍♂️</div>
@@ -295,20 +324,34 @@
         </div>
     </div>
 
-    <script>
-        // Village Grid setup (8x8 layout mapping specific buildings)
-        const gridElement = document.getElementById('grid');
-        const totalTiles = 64;
+    <!-- Upgrade Modal Popup -->
+    <div class="modal-overlay" id="upgrade-modal">
+        <div class="modal-card">
+            <h3 id="modal-title">Building Info</h3>
+            <p id="modal-desc">Manage or upgrade your building structure.</p>
+            <button class="modal-btn" onclick="upgradeBuilding()">Upgrade (Cost: 50,000 🪙)</button>
+            <button class="modal-btn close-modal" onclick="closeModal()">Close</button>
+        </div>
+    </div>
 
-        // Map out predefined iconic locations on the grid
-        const initialBuildings = {
-            27: { name: 'Town Hall', icon: '🏛️' },
-            18: { name: 'Cannon', icon: '💣' },
-            22: { name: 'Archer Tower', icon: '🏹' },
-            36: { name: 'Gold Mine', icon: '🪙' },
-            45: { name: 'Elixir Collector', icon: '🧪' },
-            5:  { name: 'Builder Hut', icon: '🛖' },
-            54: { name: 'Army Camp', icon: '⛺' }
+    <script>
+        // State variables
+        let resources = { gold: 1250400, elixir: 840200, gems: 524 };
+        let troops = { Barbarian: 41, Archer: 62, Giant: 3, WallBreaker: 1 };
+        let activeTileIndex = null;
+
+        const totalTiles = 64;
+        const gridElement = document.getElementById('grid');
+
+        // Detailed buildings layout mapping
+        let villageBuildings = {
+            27: { name: 'Town Hall', icon: '🏛️', level: 7 },
+            18: { name: 'Cannon', icon: '💣', level: 5 },
+            22: { name: 'Archer Tower', icon: '🏹', level: 6 },
+            36: { name: 'Gold Mine', icon: '🪙', level: 8 },
+            45: { name: 'Elixir Collector', icon: '🧪', level: 7 },
+            5:  { name: 'Builder Hut', icon: '🛖', level: 1 },
+            54: { name: 'Army Camp', icon: '⛺', level: 5 }
         };
 
         function initVillage() {
@@ -317,48 +360,86 @@
                 const tile = document.createElement('div');
                 tile.classList.add('tile');
                 
-                if (initialBuildings[i]) {
-                    const b = initialBuildings[i];
+                if (villageBuildings[i]) {
+                    const b = villageBuildings[i];
                     tile.innerHTML = `
                         <div class="building">${b.icon}</div>
-                        <div class="building-label">${b.name}</div>
+                        <div class="building-label">Lv.${b.level}</div>
                     `;
                 }
                 
-                tile.addEventListener('click', () => {
-                    if(initialBuildings[i]) {
-                        alert(`Clicked ${initialBuildings[i].name}! Upgrade options available.`);
-                    } else {
-                        alert("Empty plot. Ready to build defenses!");
-                    }
-                });
-
+                tile.addEventListener('click', () => handleTileClick(i));
                 gridElement.appendChild(tile);
             }
         }
 
-        // Troop counts state
-        let troops = {
-            Barbarian: 41,
-            Archer: 62,
-            Giant: 3,
-            WallBreaker: 1
-        };
+        function handleTileClick(index) {
+            activeTileIndex = index;
+            const modal = document.getElementById('upgrade-modal');
+            const title = document.getElementById('modal-title');
+            const desc = document.getElementById('modal-desc');
+
+            if (villageBuildings[index]) {
+                let b = villageBuildings[index];
+                title.innerText = `${b.name} (Level ${b.level})`;
+                desc.innerText = `Manage your ${b.name}. Upgrade it to increase efficiency and defense strength.`;
+            } else {
+                title.innerText = `Empty Plot`;
+                desc.innerText = `You can construct new defensive or resource structures here.`;
+            }
+            modal.style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('upgrade-modal').style.display = 'none';
+        }
+
+        function upgradeBuilding() {
+            if (activeTileIndex !== null && villageBuildings[activeTileIndex]) {
+                if (resources.gold >= 50000) {
+                    resources.gold -= 50000;
+                    villageBuildings[activeTileIndex].level++;
+                    updateHUD();
+                    alert("Upgrade started successfully!");
+                    closeModal();
+                    initVillage();
+                } else {
+                    alert("Not enough Gold to upgrade!");
+                }
+            } else {
+                alert("Nothing to upgrade on this empty spot yet.");
+                closeModal();
+            }
+        }
 
         function trainTroop(type) {
             troops[type]++;
-            if(type === 'Barbarian') document.getElementById('count-barb').innerText = troops[type];
-            if(type === 'Archer') document.getElementById('count-arch').innerText = troops[type];
-            if(type === 'Giant') document.getElementById('count-giant').innerText = troops[type];
-            if(type === 'WallBreaker') document.getElementById('count-wb').innerText = troops[type];
+            document.getElementById('count-barb').innerText = troops.Barbarian;
+            document.getElementById('count-arch').innerText = troops.Archer;
+            document.getElementById('count-giant').innerText = troops.Giant;
+            document.getElementById('count-wb').innerText = troops.WallBreaker;
+        }
+
+        function updateHUD() {
+            document.getElementById('gold-val').innerText = resources.gold.toLocaleString();
+            document.getElementById('elixir-val').innerText = resources.elixir.toLocaleString();
+            document.getElementById('gem-val').innerText = resources.gems.toLocaleString();
         }
 
         function triggerAttack() {
-            alert("Searching for multiplayer opponent match...");
+            alert("Finding a worthy multiplayer opponent match...");
         }
 
-        // Initialize board on load
+        // Passive Gold/Elixir loop generation from mines
+        setInterval(() => {
+            resources.gold += 120;
+            resources.elixir += 120;
+            updateHUD();
+        }, 3000);
+
+        // Initialize board
         initVillage();
+        updateHUD();
     </script>
 </body>
 </html>
