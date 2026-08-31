@@ -3,102 +3,116 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Realistic Match-3 Candy Game</title>
+    <title>Swipe Candy Blast - Level Edition</title>
     <style>
         * {
             box-sizing: border-box;
-            touch-action: manipulation;
+            touch-action: none;
+            margin: 0;
+            padding: 0;
         }
 
         body {
-            margin: 0;
-            padding: 0;
             background: radial-gradient(circle at center, #4a0e4e 0%, #1a0524 100%);
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
+            justify-content: space-between;
+            width: 100vw;
             height: 100vh;
             overflow: hidden;
             color: white;
             user-select: none;
+            padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom) 0;
+        }
+
+        header {
+            text-align: center;
+            padding-top: 10px;
         }
 
         h1 {
-            margin: 0 0 5px 0;
             color: #ffcc00;
-            font-size: 24px;
+            font-size: 20px;
             text-transform: uppercase;
             letter-spacing: 2px;
             text-shadow: 0 0 10px rgba(255, 204, 0, 0.6);
         }
 
-        /* Top HUD Score & Moves Panel */
+        /* HUD Panel */
         .hud {
             display: flex;
-            gap: 20px;
+            gap: 12px;
             background: rgba(255, 255, 255, 0.1);
-            padding: 8px 18px;
+            padding: 6px 14px;
             border-radius: 12px;
             border: 2px solid rgba(255, 255, 255, 0.2);
-            margin-bottom: 12px;
-            font-size: 15px;
+            font-size: 13px;
             font-weight: bold;
             backdrop-filter: blur(5px);
-            box-shadow: 0 8px 16px rgba(0,0,0,0.4);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.4);
+            margin-top: 5px;
         }
 
         .hud span {
             color: #ff99ff;
         }
 
-        /* Game Board Container (8x8 Grid) */
+        /* Full Screen Board Container */
         .board-container {
             position: relative;
             background: rgba(0, 0, 0, 0.4);
-            padding: 8px;
+            padding: 6px;
             border-radius: 16px;
             border: 4px solid #ff66b2;
             box-shadow: 0 15px 35px rgba(0,0,0,0.8), inset 0 0 15px rgba(0,0,0,0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .grid {
             display: grid;
-            grid-template-columns: repeat(8, 44px);
-            grid-template-rows: repeat(8, 44px);
-            gap: 4px;
+            grid-template-columns: repeat(8, 11vw);
+            grid-template-rows: repeat(8, 11vw);
+            max-width: 380px;
+            max-height: 380px;
+            gap: 3px;
+        }
+
+        @media (min-width: 450px) {
+            .grid {
+                grid-template-columns: repeat(8, 44px);
+                grid-template-rows: repeat(8, 44px);
+            }
         }
 
         /* Candy Tile Styling */
         .candy {
-            width: 44px;
-            height: 44px;
-            border-radius: 10px;
+            width: 100%;
+            height: 100%;
+            border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 26px;
+            font-size: 24px;
             cursor: pointer;
-            transition: transform 0.2s, background 0.2s;
+            transition: transform 0.1s;
             box-shadow: inset 0 3px 6px rgba(255,255,255,0.4), 0 4px 8px rgba(0,0,0,0.3);
         }
 
-        .candy:hover {
-            transform: scale(1.08);
+        .candy.dragging {
+            transform: scale(1.2);
+            z-index: 10;
+            filter: brightness(1.2);
         }
 
-        .candy.selected {
-            border: 3px solid #ffffff;
-            transform: scale(1.1);
-            box-shadow: 0 0 15px #ffffff;
-        }
-
-        /* Game Over / Win Modal */
+        /* Modal Screens (Level Win / Game Over) */
         .modal {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(26, 5, 36, 0.9);
+            background: rgba(26, 5, 36, 0.92);
             backdrop-filter: blur(8px);
             display: none;
             flex-direction: column;
@@ -106,33 +120,39 @@
             justify-content: center;
             z-index: 30;
             text-align: center;
-            border-radius: 12px;
+            padding: 20px;
         }
 
         .modal h2 {
             color: #ff3399;
-            font-size: 32px;
-            margin-bottom: 5px;
+            font-size: 28px;
+            margin-bottom: 8px;
             text-shadow: 0 0 15px rgba(255, 51, 153, 0.7);
         }
+
+        .modal p {
+            font-size: 15px;
+            margin: 4px 0;
+            color: #ffcc00;
+        }
         
-        .btn-restart {
+        .btn-action {
             background: linear-gradient(to bottom, #ff3399, #cc0066);
             border: 2px solid #ff99ff;
             color: white;
-            padding: 10px 25px;
-            font-size: 16px;
+            padding: 12px 28px;
+            font-size: 15px;
             font-weight: bold;
-            border-radius: 10px;
+            border-radius: 12px;
             cursor: pointer;
             margin-top: 15px;
             box-shadow: 0 6px 15px rgba(204, 0, 102, 0.5);
         }
-        .btn-restart:hover { filter: brightness(1.1); }
+        .btn-action:hover { filter: brightness(1.1); }
 
-        .hint {
-            margin-top: 12px;
-            font-size: 12px;
+        footer {
+            padding-bottom: 15px;
+            font-size: 11px;
             color: #cc99ff;
             text-align: center;
         }
@@ -140,64 +160,78 @@
 </head>
 <body>
 
-    <h1>Candy Crush Saga Lite</h1>
-
-    <div class="hud">
-        <div>Score: <span id="score">0</span></div>
-        <div>Moves Left: <span id="moves">25</span></div>
-    </div>
+    <header>
+        <h1>Candy Blast</h1>
+        <div class="hud">
+            <div>Level: <span id="level-display">1</span></div>
+            <div>Score: <span id="score">0</span>/<span id="target-score">300</span></div>
+            <div>Moves: <span id="moves">20</span></div>
+        </div>
+    </header>
 
     <div class="board-container">
         <div class="grid" id="grid"></div>
 
-        <!-- Modal Screen -->
+        <!-- Dynamic Game State Modal -->
         <div class="modal" id="modal">
-            <h2 id="modal-title">Game Over</h2>
-            <p>Final Score: <span id="final-score" style="color: #ffcc00; font-weight: bold;">0</span></p>
-            <button class="btn-restart" onclick="initGame()">Play Again</button>
+            <h2 id="modal-title">Level Cleared!</h2>
+            <p id="modal-text">Great job crushing those candies!</p>
+            <button class="btn-action" id="modal-btn" onclick="nextLevel()">Next Level</button>
         </div>
     </div>
 
-    <div class="hint">
-        Click two adjacent candies to swap them and match 3 or more!
-    </div>
+    <footer>
+        Swipe candies to match 3 or more & reach the target score!
+    </footer>
 
     <script>
         const width = 8;
-        const candies = ['🔴', '🔵', '🟢', '🟡', '🟣', '🟠']; // Candies representation
-        let board = [];
+        const candies = ['🔴', '🔵', '🟢', '🟡', '🟣', '🟠'];
+        
+        let level = 1;
         let score = 0;
-        let moves = 25;
-        let selectedIndex = null;
+        let targetScore = 300;
+        let moves = 20;
+        let board = [];
         let isProcessing = false;
+
+        let touchStartIndex = null;
+        let startX = 0;
+        let startY = 0;
 
         const gridElement = document.getElementById('grid');
         const scoreDisplay = document.getElementById('score');
+        const targetDisplay = document.getElementById('target-score');
         const movesDisplay = document.getElementById('moves');
+        const levelDisplay = document.getElementById('level-display');
         const modal = document.getElementById('modal');
         const modalTitle = document.getElementById('modal-title');
-        const finalScoreDisplay = document.getElementById('final-score');
+        const modalText = document.getElementById('modal-text');
+        const modalBtn = document.getElementById('modal-btn');
 
         function initGame() {
             score = 0;
-            moves = 25;
+            moves = Math.max(15, 25 - (level * 2)); // fewer moves as levels get harder
+            targetScore = level * 350; // higher target per level
             isProcessing = false;
             modal.style.display = 'none';
+
             scoreDisplay.innerText = score;
+            targetDisplay.innerText = targetScore;
             movesDisplay.innerText = moves;
+            levelDisplay.innerText = level;
 
             do {
                 board = [];
                 for (let i = 0; i < width * width; i++) {
                     board.push(candies[Math.floor(Math.random() * candies.length)]);
                 }
-            } while (checkInitialMatches()); // Ensure no initial matches at start
+            } while (checkInitialMatches());
 
             renderBoard();
         }
 
         function checkInitialMatches() {
-            // Check row or col for preset matches
             for (let i = 0; i < 64; i++) {
                 let row = Math.floor(i / width);
                 let col = i % width;
@@ -214,50 +248,76 @@
                 cell.classList.add('candy');
                 cell.innerText = candy;
                 cell.dataset.index = index;
-                if (selectedIndex === index) {
-                    cell.classList.add('selected');
-                }
-                cell.addEventListener('click', () => handleCellClick(index));
+
+                cell.addEventListener('pointerdown', (e) => handlePointerDown(e, index));
                 gridElement.appendChild(cell);
             });
         }
 
-        function handleCellClick(index) {
+        function handlePointerDown(e, index) {
             if (isProcessing || moves <= 0) return;
+            touchStartIndex = index;
+            startX = e.clientX;
+            startY = e.clientY;
 
-            if (selectedIndex === null) {
-                selectedIndex = index;
-                renderBoard();
-            } else {
-                let firstIndex = selectedIndex;
-                selectedIndex = null;
+            let targetCell = gridElement.children[index];
+            if (targetCell) targetCell.classList.add('dragging');
 
-                if (isAdjacent(firstIndex, index)) {
-                    swapCandies(firstIndex, index);
-                    
-                    // Check if swap produces a match
-                    let matched = checkMatches();
-                    if (matched) {
-                        moves--;
-                        movesDisplay.innerText = moves;
-                        processMatches();
-                    } else {
-                        // Swap back if no match found (illegal move)
-                        swapCandies(firstIndex, index);
-                        renderBoard();
-                    }
-                } else {
-                    renderBoard();
-                }
-
-                checkGameOver();
-            }
+            window.addEventListener('pointerup', handlePointerUp, { once: true });
         }
 
-        function isAdjacent(i1, i2) {
-            let r1 = Math.floor(i1 / width), c1 = i1 % width;
-            let r2 = Math.floor(i2 / width), c2 = i2 % width;
-            return (Math.abs(r1 - r2) + Math.abs(c1 - c2) === 1);
+        function handlePointerUp(e) {
+            if (touchStartIndex === null) return;
+
+            let endX = e.clientX;
+            let endY = e.clientY;
+            let diffX = endX - startX;
+            let diffY = endY - startY;
+
+            let targetIndex = null;
+            let threshold = 15;
+
+            if (Math.abs(diffX) > Math.abs(diffY)) {
+                if (diffX > threshold && touchStartIndex % width < width - 1) {
+                    targetIndex = touchStartIndex + 1;
+                } else if (diffX < -threshold && touchStartIndex % width > 0) {
+                    targetIndex = touchStartIndex - 1;
+                }
+            } else {
+                if (diffY > threshold && touchStartIndex < width * (width - 1)) {
+                    targetIndex = touchStartIndex + width;
+                } else if (diffY < -threshold && touchStartIndex >= width) {
+                    targetIndex = touchStartIndex - width;
+                }
+            }
+
+            let oldCell = gridElement.children[touchStartIndex];
+            if (oldCell) oldCell.classList.remove('dragging');
+
+            if (targetIndex !== null) {
+                executeSwipe(touchStartIndex, targetIndex);
+            }
+
+            touchStartIndex = null;
+        }
+
+        function executeSwipe(i1, i2) {
+            isProcessing = true;
+            swapCandies(i1, i2);
+
+            let matched = checkMatches();
+            if (matched) {
+                moves--;
+                movesDisplay.innerText = moves;
+                processMatches();
+            } else {
+                setTimeout(() => {
+                    swapCandies(i1, i2);
+                    isProcessing = false;
+                }, 150);
+            }
+
+            checkGameProgress();
         }
 
         function swapCandies(i1, i2) {
@@ -268,8 +328,6 @@
         }
 
         function checkMatches() {
-            let matchFound = false;
-            // We only need to return boolean for quick verification
             for (let r = 0; r < width; r++) {
                 for (let c = 0; c < width - 2; c++) {
                     let idx = r * width + c;
@@ -286,10 +344,8 @@
         }
 
         function processMatches() {
-            isProcessing = true;
             let clearedIndices = new Set();
 
-            // Find horizontal matches
             for (let r = 0; r < width; r++) {
                 for (let c = 0; c < width - 2; c++) {
                     let idx = r * width + c;
@@ -302,7 +358,6 @@
                 }
             }
 
-            // Find vertical matches
             for (let r = 0; r < width - 2; r++) {
                 for (let c = 0; c < width; c++) {
                     let idx = r * width + c;
@@ -324,19 +379,18 @@
 
                 setTimeout(() => {
                     applyGravity();
-                }, 300);
+                }, 250);
             } else {
                 isProcessing = false;
+                checkGameProgress();
             }
         }
 
         function applyGravity() {
-            // Drop existing candies down
             for (let c = 0; c < width; c++) {
                 for (let r = width - 1; r >= 0; r--) {
                     let idx = r * width + c;
                     if (board[idx] === null) {
-                        // Look up for the first available candy
                         let found = false;
                         for (let aboveR = r - 1; aboveR >= 0; aboveR--) {
                             let aboveIdx = aboveR * width + c;
@@ -347,7 +401,6 @@
                                 break;
                             }
                         }
-                        // If none found above, generate a new candy at top
                         if (!found) {
                             board[idx] = candies[Math.floor(Math.random() * candies.length)];
                         }
@@ -357,27 +410,45 @@
 
             renderBoard();
 
-            // Check if cascading matches occurred
             setTimeout(() => {
                 if (checkMatches()) {
                     processMatches();
                 } else {
                     isProcessing = false;
+                    checkGameProgress();
                 }
-            }, 300);
+            }, 250);
         }
 
-        function checkGameOver() {
-            if (moves <= 0) {
+        function checkGameProgress() {
+            if (score >= targetScore) {
                 setTimeout(() => {
-                    modalTitle.innerText = "Out of Moves!";
-                    finalScoreDisplay.innerText = score;
+                    modalTitle.innerText = "Level Complete! 🎉";
+                    modalText.innerText = `Awesome! Target Score Reached.`;
+                    modalBtn.innerText = "Next Level";
+                    modalBtn.onclick = nextLevel;
                     modal.style.display = 'flex';
-                }, 400);
+                }, 300);
+            } else if (moves <= 0 && !isProcessing) {
+                setTimeout(() => {
+                    modalTitle.innerText = "Out of Moves! 😢";
+                    modalText.innerText = `You scored ${score}. Needed ${targetScore}.`;
+                    modalBtn.innerText = "Try Again";
+                    modalBtn.onclick = restartLevel;
+                    modal.style.display = 'flex';
+                }, 300);
             }
         }
 
-        // Initialize game on load
+        function nextLevel() {
+            level++;
+            initGame();
+        }
+
+        function restartLevel() {
+            initGame();
+        }
+
         initGame();
     </script>
 </body>
