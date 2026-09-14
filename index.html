@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Battle Royale Toon - Mobile Edition</title>
+    <title>Spider-Man Toon Battle Royale - Ultimate Edition</title>
     <!-- Load Babylon.js and GUI library -->
     <script src="https://cdn.babylonjs.com/babylon.js"></script>
     <script src="https://cdn.babylonjs.com/gui/babylon.gui.min.js"></script>
@@ -44,21 +44,21 @@
         }
         .hud-panel {
             background: rgba(15, 23, 42, 0.9);
-            border: 2px solid rgba(244, 63, 94, 0.6);
+            border: 2px solid rgba(225, 29, 72, 0.7);
             padding: 6px 12px;
             border-radius: 8px;
             color: #ffffff;
             font-size: 11px;
             font-weight: 900;
-            box-shadow: 0 4px 15px rgba(244, 63, 94, 0.3);
+            box-shadow: 0 4px 15px rgba(225, 29, 72, 0.4);
             backdrop-filter: blur(6px);
             pointer-events: auto;
         }
         .hud-panel span {
-            color: #f43f5e;
+            color: #fb7185;
         }
         #download-btn {
-            background: linear-gradient(135deg, #f43f5e, #fb7185);
+            background: linear-gradient(135deg, #e11d48, #f43f5e);
             color: white;
             border: none;
             padding: 6px 12px;
@@ -66,7 +66,7 @@
             font-weight: 900;
             font-size: 10px;
             cursor: pointer;
-            box-shadow: 0 4px 12px rgba(244, 63, 94, 0.4);
+            box-shadow: 0 4px 12px rgba(225, 29, 72, 0.5);
             pointer-events: auto;
         }
     </style>
@@ -75,7 +75,7 @@
 
     <div id="hud-overlay">
         <div class="hud-panel">HP: <span id="health-val">100</span></div>
-        <div class="hud-panel">GUN: <span id="weapon-val">TOON RIFLE</span></div>
+        <div class="hud-panel">HERO: <span id="weapon-val">SPIDER-BLASTER</span></div>
         <div class="hud-panel">AMMO: <span id="ammo-val">30</span>/30</div>
         <button id="download-btn" onclick="triggerAppDownload()">📲 DOWNLOAD APP</button>
     </div>
@@ -85,13 +85,12 @@
     <script>
         // --- Progressive Web App / App Download Simulation ---
         function triggerAppDownload() {
-            alert("App Installer Package initialized! Adding Toon Battle Royale shortcut to your device screen.");
-            // Generates a quick virtual download data blob for mobile browser PWA installation
+            alert("App Installer Package initialized! Adding Spider-Man Battle Royale shortcut to your device screen.");
             const appBlob = new Blob([document.documentElement.outerHTML], { type: 'text/html' });
             const url = URL.createObjectURL(appBlob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'ToonBattleRoyale.html';
+            a.download = 'SpiderManBattleRoyale.html';
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
@@ -111,20 +110,20 @@
 
                 if (type === 'Shotgun') {
                     osc.type = 'triangle';
-                    osc.frequency.setValueAtTime(180, this.ctx.currentTime);
+                    osc.frequency.setValueAtTime(200, this.ctx.currentTime);
                     osc.frequency.exponentialRampToValueAtTime(30, this.ctx.currentTime + 0.25);
-                    gain.gain.setValueAtTime(0.8, this.ctx.currentTime);
+                    gain.gain.setValueAtTime(0.85, this.ctx.currentTime);
                     gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.25);
                 } else if (type === 'Sniper') {
                     osc.type = 'sawtooth';
-                    osc.frequency.setValueAtTime(450, this.ctx.currentTime);
+                    osc.frequency.setValueAtTime(500, this.ctx.currentTime);
                     osc.frequency.exponentialRampToValueAtTime(40, this.ctx.currentTime + 0.35);
                     gain.gain.setValueAtTime(0.9, this.ctx.currentTime);
                     gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.35);
-                } else { // Cartoon Rifle
+                } else { // Spider-Blaster Web Shoot
                     osc.type = 'square';
-                    osc.frequency.setValueAtTime(240, this.ctx.currentTime);
-                    osc.frequency.exponentialRampToValueAtTime(60, this.ctx.currentTime + 0.12);
+                    osc.frequency.setValueAtTime(300, this.ctx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(80, this.ctx.currentTime + 0.12);
                     gain.gain.setValueAtTime(0.6, this.ctx.currentTime);
                     gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.12);
                 }
@@ -135,111 +134,126 @@
                 osc.stop(this.ctx.currentTime + 0.35);
             }
 
-            playPop() {
+            playWebSound() {
                 if (this.ctx.state === 'suspended') this.ctx.resume();
                 let osc = this.ctx.createOscillator();
                 let gain = this.ctx.createGain();
                 osc.type = 'sine';
-                osc.frequency.setValueAtTime(300, this.ctx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(800, this.ctx.currentTime + 0.1);
+                osc.frequency.setValueAtTime(350, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(900, this.ctx.currentTime + 0.12);
                 gain.gain.setValueAtTime(0.4, this.ctx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.12);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.15);
                 osc.connect(gain);
                 gain.connect(this.ctx.destination);
                 osc.start();
-                osc.stop(this.ctx.currentTime + 0.12);
+                osc.stop(this.ctx.currentTime + 0.15);
             }
         }
 
         const sound = new SoundSystem();
 
-        // --- Babylon.js 3D Cartoon Cel-Shaded Engine ---
+        // --- Babylon.js 3D Spider-Man Engine ---
         window.addEventListener('DOMContentLoaded', () => {
             const canvas = document.getElementById("renderCanvas");
             const engine = new BABYLON.Engine(canvas, true, { preserveDrawingBuffer: true, stencil: true });
 
             const createScene = function () {
                 const scene = new BABYLON.Scene(engine);
-                scene.clearColor = new BABYLON.Color3(0.5, 0.8, 0.95); // Bright sky blue cartoon aesthetic
+                scene.clearColor = new BABYLON.Color3(0.55, 0.8, 0.98); // Bright heroic sky blue
 
-                // Full-Screen Optimized Mobile Follow Camera
-                const camera = new BABYLON.FollowCamera("FollowCam", new BABYLON.Vector3(0, 9, -14), scene);
-                camera.radius = 8;
-                camera.heightOffset = 2.6;
-                camera.rotationOffset = 0;
-                camera.cameraAcceleration = 0.1;
+                // Full-Screen Mobile Follow Camera
+                const camera = new BABYLON.FollowCamera("FollowCam", new BABYLON.Vector3(0, 9, -13), scene);
+                camera.radius = 7.5;
+                camera.heightOffset = 2.4;
+                camera.rotationOffset = 180; // Aligns camera behind the character correctly
+                camera.cameraAcceleration = 0.12;
                 camera.maxCameraSpeed = 20;
 
-                // Vibrant Cartoon Lighting
+                // Vibrant Hero Lighting
                 const light = new BABYLON.HemisphericLight("HemiLight", new BABYLON.Vector3(0, 1, 0), scene);
-                light.intensity = 1.1;
-                light.groundColor = new BABYLON.Color3(0.3, 0.5, 0.2);
+                light.intensity = 1.2;
+                light.groundColor = new BABYLON.Color3(0.2, 0.4, 0.2);
 
                 const dirLight = new BABYLON.DirectionalLight("dir", new BABYLON.Vector2(-1, -2, 1), scene);
                 dirLight.position = new BABYLON.Vector3(20, 40, -20);
-                dirLight.intensity = 0.8;
+                dirLight.intensity = 0.9;
 
-                // Colorful Stylized Ground
+                // Ground Terrain
                 const ground = BABYLON.MeshBuilder.CreateGround("ground", { width: 180, height: 180, subdivisions: 2 }, scene);
                 const groundMat = new BABYLON.StandardMaterial("groundMat", scene);
-                groundMat.diffuseColor = new BABYLON.Color3(0.25, 0.75, 0.35); // Cartoon green grass
+                groundMat.diffuseColor = new BABYLON.Color3(0.2, 0.65, 0.3);
                 groundMat.specularColor = new BABYLON.Color3(0, 0, 0);
                 ground.material = groundMat;
 
-                // Stylized Cartoon Obstacles (Bright colored blocks / crates)
+                // Stylized Obstacle Buildings
                 const colors = [
-                    new BABYLON.Color3(0.95, 0.25, 0.25), // Red
-                    new BABYLON.Color3(0.25, 0.5, 0.95),  // Blue
-                    new BABYLON.Color3(0.95, 0.85, 0.15)  // Yellow
+                    new BABYLON.Color3(0.9, 0.2, 0.2), // Red
+                    new BABYLON.Color3(0.1, 0.3, 0.8), // Blue
+                    new BABYLON.Color3(0.95, 0.8, 0.1) // Gold
                 ];
 
                 for (let i = 0; i < 18; i++) {
-                    let box = BABYLON.MeshBuilder.CreateBox("obs" + i, { size: 3.2 }, scene);
+                    let box = BABYLON.MeshBuilder.CreateBox("obs" + i, { size: 3.5 }, scene);
                     box.position.x = (Math.random() - 0.5) * 100;
                     box.position.z = (Math.random() - 0.5) * 100;
-                    box.position.y = 1.6;
+                    box.position.y = 1.75;
 
                     let mat = new BABYLON.StandardMaterial("boxMat" + i, scene);
                     mat.diffuseColor = colors[i % colors.length];
-                    mat.specularColor = new BABYLON.Color3(0.2, 0.2, 0.2);
                     box.material = mat;
                 }
 
-                // Cartoon Action Hero Character Setup
-                const player = BABYLON.MeshBuilder.CreateSphere("playerBody", { diameter: 1.8, segments: 16 }, scene);
+                // --- Spider-Man Character Model Construction ---
+                const player = BABYLON.MeshBuilder.CreateSphere("spiderBody", { diameter: 1.7, segments: 16 }, scene);
                 player.position = new BABYLON.Vector3(0, 1, 0);
 
-                const playerMat = new BABYLON.StandardMaterial("playerMat", scene);
-                playerMat.diffuseColor = new BABYLON.Color3(0.95, 0.5, 0.1); // Vibrant cartoon orange suit
-                playerMat.specularColor = new BABYLON.Color3(0.5, 0.5, 0.5);
-                player.material = playerMat;
+                // Spider-Man Red Suit Material
+                const spideyMat = new BABYLON.StandardMaterial("spideyMat", scene);
+                spideyMat.diffuseColor = new BABYLON.Color3(0.92, 0.12, 0.18); // Iconic Red
+                spideyMat.specularColor = new BABYLON.Color3(0.4, 0.4, 0.4);
+                player.material = spideyMat;
 
-                // Add character eyes/visor for hero look
-                let visor = BABYLON.MeshBuilder.CreateBox("visor", { width: 1.2, height: 0.5, depth: 0.6 }, scene);
-                visor.position = new BABYLON.Vector3(0, 0.3, 0.7);
-                visor.parent = player;
-                let visorMat = new BABYLON.StandardMaterial("vMat", scene);
-                visorMat.diffuseColor = new BABYLON.Color3(0.1, 0.1, 0.1);
-                visor.material = visorMat;
+                // Blue Suit Shoulders/Hips Ring
+                let blueSuitRing = BABYLON.MeshBuilder.CreateCylinder("blueRing", { diameter: 1.72, height: 0.8 }, scene);
+                blueSuitRing.parent = player;
+                let blueMat = new BABYLON.StandardMaterial("bMat", scene);
+                blueMat.diffuseColor = new BABYLON.Color3(0.08, 0.2, 0.65); // Iconic Blue
+                blueSuitRing.material = blueMat;
+
+                // Big Spider-Man Cartoon Eyes
+                let leftEye = BABYLON.MeshBuilder.CreateBox("lEye", { width: 0.35, height: 0.45, depth: 0.3 }, scene);
+                leftEye.position = new BABYLON.Vector3(-0.32, 0.25, 0.7);
+                leftEye.rotation.z = 0.3;
+                leftEye.parent = player;
+
+                let rightEye = BABYLON.MeshBuilder.CreateBox("rEye", { width: 0.35, height: 0.45, depth: 0.3 }, scene);
+                rightEye.position = new BABYLON.Vector3(0.32, 0.25, 0.7);
+                rightEye.rotation.z = -0.3;
+                rightEye.parent = player;
+
+                let eyeMat = new BABYLON.StandardMaterial("eyeMat", scene);
+                eyeMat.diffuseColor = new BABYLON.Color3(1, 1, 1); // Pure white eyes
+                leftEye.material = eyeMat;
+                rightEye.material = eyeMat;
 
                 camera.lockedTarget = player;
 
-                // Toon Safe Zone Border Ring
-                const safeZone = BABYLON.MeshBuilder.CreateCylinder("safeZone", { diameter: 120, height: 80, tessellation: 36, sideOrientation: BABYLON.Mesh.BACKSIDE }, scene);
+                // Safe Zone Ring (Battle Royale Storm)
+                const safeZone = BABYLON.MeshBuilder.CreateCylinder("safeZone", { diameter: 130, height: 80, tessellation: 36, sideOrientation: BABYLON.Mesh.BACKSIDE }, scene);
                 const zoneMat = new BABYLON.StandardMaterial("zoneMat", scene);
-                zoneMat.diffuseColor = new BABYLON.Color3(0.8, 0.1, 0.9); // Electric purple-pink cartoon zone
-                zoneMat.alpha = 0.18;
+                zoneMat.diffuseColor = new BABYLON.Color3(0.5, 0.1, 0.9);
+                zoneMat.alpha = 0.16;
                 safeZone.material = zoneMat;
 
-                // --- Weapon System ---
+                // --- Weapon Slots System ---
                 const weapons = [
-                    { name: "TOON RIFLE", ammo: 30, maxAmmo: 30, type: "AR" },
-                    { name: "BOOM SHOTGUN", ammo: 6, maxAmmo: 6, type: "Shotgun" },
-                    { name: "ZAP SNIPER", ammo: 4, maxAmmo: 4, type: "Sniper" }
+                    { name: "SPIDER-BLASTER", ammo: 30, maxAmmo: 30, type: "AR" },
+                    { name: "WEB-SHOTGUN", ammo: 6, maxAmmo: 6, type: "Shotgun" },
+                    { name: "VENOM-SNIPER", ammo: 4, maxAmmo: 4, type: "Sniper" }
                 ];
                 let currentWeaponIndex = 0;
 
-                // --- Cartoon Glow Wall (Gloo Wall) System ---
+                // --- Gloo Wall (Web Shield) System ---
                 let glooCount = 5;
                 let isPlacingGloo = false;
                 let previewGloo = null;
@@ -248,8 +262,8 @@
                     if (previewGloo) previewGloo.dispose();
                     previewGloo = BABYLON.MeshBuilder.CreateBox("preview", { width: 3.2, height: 2.6, depth: 0.9 }, scene);
                     let pm = new BABYLON.StandardMaterial("pm", scene);
-                    pm.diffuseColor = new BABYLON.Color3(0.2, 0.9, 1);
-                    pm.alpha = 0.6;
+                    pm.diffuseColor = new BABYLON.Color3(0.9, 0.9, 0.9); // Web white shield
+                    pm.alpha = 0.65;
                     previewGloo.material = pm;
                     updateGlooPos();
                 }
@@ -264,14 +278,14 @@
 
                 function dropGloo() {
                     if (glooCount <= 0) return;
-                    sound.playPop();
-                    let wall = BABYLON.MeshBuilder.CreateBox("glooWall", { width: 3.2, height: 2.6, depth: 0.9 }, scene);
+                    sound.playWebSound();
+                    let wall = BABYLON.MeshBuilder.CreateBox("webShield", { width: 3.2, height: 2.6, depth: 0.9 }, scene);
                     wall.position = previewGloo.position.clone();
                     wall.rotation.y = previewGloo.rotation.y;
 
                     let wm = new BABYLON.StandardMaterial("wm", scene);
-                    wm.diffuseColor = new BABYLON.Color3(0.1, 0.7, 1);
-                    wm.emissiveColor = new BABYLON.Color3(0.1, 0.3, 0.6);
+                    wm.diffuseColor = new BABYLON.Color3(0.95, 0.95, 0.95);
+                    wm.emissiveColor = new BABYLON.Color3(0.5, 0.5, 0.5);
                     wall.material = wm;
 
                     glooCount--;
@@ -279,7 +293,7 @@
                     if (previewGloo) { previewGloo.dispose(); previewGloo = null; }
                 }
 
-                // --- Full Screen Touch HUD Layout ---
+                // --- Touch HUD Controls ---
                 const advancedTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
 
                 // Movement Joystick (Left Bottom)
@@ -297,8 +311,8 @@
                 let moveJoyThumb = new BABYLON.GUI.Ellipse("moveThumb");
                 moveJoyThumb.width = "65px";
                 moveJoyThumb.height = "65px";
-                moveJoyThumb.color = "rgba(244, 63, 94, 0.9)";
-                moveJoyThumb.background = "rgba(244, 63, 94, 0.6)";
+                moveJoyThumb.color = "rgba(225, 29, 72, 0.9)";
+                moveJoyThumb.background = "rgba(225, 29, 72, 0.6)";
                 moveJoyBase.addControl(moveJoyThumb);
 
                 let isMoving = false;
@@ -335,19 +349,21 @@
                             }
                             moveJoyThumb.left = dx + "px";
                             moveJoyThumb.top = dy + "px";
-                            moveVector.x = dx / maxDist;
-                            moveVector.z = -dy / maxDist;
+
+                            // FIXED MOVEMENT DIRECTION: Corrected axis mapping so joystick maps properly to camera forward/sides
+                            moveVector.x = -dx / maxDist;
+                            moveVector.z = dy / maxDist;
                         }
                     }
                 });
 
                 // Right Action Buttons
                 // 1. Fire Button
-                let fireButton = BABYLON.GUI.Button.CreateSimpleButton("fireBtn", "POW!");
+                let fireButton = BABYLON.GUI.Button.CreateSimpleButton("fireBtn", "THWIP!");
                 fireButton.width = "90px";
                 fireButton.height = "90px";
                 fireButton.color = "white";
-                fireButton.background = "rgba(244, 63, 94, 0.9)";
+                fireButton.background = "rgba(225, 29, 72, 0.9)";
                 fireButton.cornerRadius = 45;
                 fireButton.thickness = 4;
                 fireButton.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_RIGHT;
@@ -368,11 +384,11 @@
                         document.getElementById("ammo-val").innerText = curW.ammo;
                         sound.playGunshot(curW.type);
 
-                        // Cartoon squash and stretch action bounce
+                        // Spider-Man action squash and stretch bounce
                         player.scaling = new BABYLON.Vector3(1.2, 0.8, 1.2);
                         setTimeout(() => player.scaling = new BABYLON.Vector3(1, 1, 1), 90);
                     } else {
-                        sound.playPop();
+                        sound.playWebSound();
                         curW.ammo = curW.maxAmmo;
                         document.getElementById("ammo-val").innerText = curW.ammo;
                     }
@@ -401,11 +417,11 @@
                     let curW = weapons[currentWeaponIndex];
                     document.getElementById("weapon-val").innerText = curW.name;
                     document.getElementById("ammo-val").innerText = curW.ammo;
-                    sound.playPop();
+                    sound.playWebSound();
                 });
 
-                // 3. Gloo Wall Placement Button
-                let glooButton = BABYLON.GUI.Button.CreateSimpleButton("glooBtn", "GLOO 🧱");
+                // 3. Web Shield (Gloo Wall) Button
+                let glooButton = BABYLON.GUI.Button.CreateSimpleButton("glooBtn", "WEB 🧱");
                 glooButton.width = "80px";
                 glooButton.height = "48px";
                 glooButton.color = "white";
