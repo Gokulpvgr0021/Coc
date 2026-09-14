@@ -3,10 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Spider-Man Toon Battle Royale - Ultimate Edition</title>
-    <!-- Load Babylon.js and GUI library -->
+    <title>Spider-Man Toon Battle Royale - Online Multiplayer</title>
+    <!-- Babylon.js & GUI -->
     <script src="https://cdn.babylonjs.com/babylon.js"></script>
     <script src="https://cdn.babylonjs.com/gui/babylon.gui.min.js"></script>
+    <!-- PeerJS for Free P2P Online Multiplayer without a dedicated game server -->
+    <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
     <style>
         * {
             box-sizing: border-box;
@@ -31,12 +33,61 @@
             touch-action: none;
             outline: none;
         }
+        #lobby-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(5, 8, 20, 0.95);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        .lobby-box {
+            background: rgba(15, 23, 42, 0.9);
+            border: 2px solid #e11d48;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 0 30px rgba(225, 29, 72, 0.5);
+            max-width: 350px;
+            width: 100%;
+        }
+        input {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            background: #1e293b;
+            border: 1px solid #475569;
+            color: white;
+            border-radius: 6px;
+            font-size: 16px;
+            text-align: center;
+        }
+        .btn {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            background: linear-gradient(135deg, #e11d48, #f43f5e);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 15px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(225, 29, 72, 0.4);
+        }
         #hud-overlay {
             position: absolute;
             top: env(safe-area-inset-top, 10px);
             left: 12px;
             right: 12px;
-            display: flex;
+            display: none;
             justify-content: space-between;
             align-items: center;
             pointer-events: none;
@@ -73,6 +124,19 @@
 </head>
 <body>
 
+    <!-- Online Matchmaking Lobby -->
+    <div id="lobby-overlay">
+        <div class="lobby-box">
+            <h2>🕷️ SPIDER-MAN BATTLE ROYALE</h2>
+            <p style="font-size: 13px; color: #94a3b8;">Play online with friends or train with bots!</p>
+            <input type="text" id="room-input" placeholder="Enter Room Code (e.g. room123)">
+            <button class="btn" onclick="hostGame()">CREATE ROOM</button>
+            <button class="btn" style="background: linear-gradient(135deg, #0284c7, #38bdf8);" onclick="joinGame()">JOIN FRIEND'S ROOM</button>
+            <button class="btn" style="background: #334155;" onclick="startSoloGame()">PLAY SOLO VS BOTS</button>
+            <p id="connection-status" style="font-size: 12px; margin-top: 10px; color: #38bdf8;"></p>
+        </div>
+    </div>
+
     <div id="hud-overlay">
         <div class="hud-panel">HP: <span id="health-val">100</span></div>
         <div class="hud-panel">HERO: <span id="weapon-val">SPIDER-BLASTER</span></div>
@@ -83,7 +147,12 @@
     <canvas id="renderCanvas"></canvas>
 
     <script>
-        // --- Progressive Web App / App Download Simulation ---
+        let peer = null;
+        let conn = null;
+        let isOnline = false;
+        let myId = "";
+        let remotePlayerMesh = null;
+
         function triggerAppDownload() {
             alert("App Installer Package initialized! Adding Spider-Man Battle Royale shortcut to your device screen.");
             const appBlob = new Blob([document.documentElement.outerHTML], { type: 'text/html' });
@@ -96,374 +165,241 @@
             document.body.removeChild(a);
         }
 
-        // --- Web Audio API Cartoon Sound Engine ---
+        function hostGame() {
+            let code = document.getElementById("room-input").value.trim() || "spiderroom1";
+            document.getElementById("connection-status").innerText = "Creating room: " + code + "...";
+            peer = new Peer(code);
+            peer.on('open', (id) => {
+                myId = id;
+                document.getElementById("connection-status").innerText = "Room Created! Waiting for friend to join...";
+            });
+            peer.on('connection', (connection) => {
+                conn = connection;
+                setupConnection();
+                startGameUI();
+            });
+            peer.on('error', (err) => {
+                alert("Room ID already taken or error occurred. Try another code.");
+            });
+        }
+
+        function joinGame() {
+            let code = document.getElementById("room-input").value.trim();
+            if (!code) { alert("Please enter your friend's room code!"); return; }
+            document.getElementById("connection-status").innerText = "Connecting to room " + code + "...";
+            peer = new Peer();
+            peer.on('open', (id) => {
+                conn = peer.connect(code);
+                setupConnection();
+                startGameUI();
+            });
+        }
+
+        function startSoloGame() {
+            startGameUI();
+        }
+
+        function setupConnection() {
+            isOnline = true;
+            conn.on('data', (data) => {
+                if (data.type === 'update' && remotePlayerMesh) {
+                    remotePlayerMesh.position.x = data.x;
+                    remotePlayerMesh.position.z = data.z;
+                    remotePlayerMesh.rotation.y = data.rotY;
+                }
+            });
+        }
+
+        function startGameUI() {
+            document.getElementById("lobby-overlay").style.display = "none";
+            document.getElementById("hud-overlay").style.display = "flex";
+            initGameEngine();
+        }
+
+        // --- Web Audio Sound Engine ---
         class SoundSystem {
             constructor() {
                 const AudioContext = window.AudioContext || window.webkitAudioContext;
                 this.ctx = new AudioContext();
             }
-
-            playGunshot(type) {
+            playGunshot() {
                 if (this.ctx.state === 'suspended') this.ctx.resume();
                 let osc = this.ctx.createOscillator();
                 let gain = this.ctx.createGain();
-
-                if (type === 'Shotgun') {
-                    osc.type = 'triangle';
-                    osc.frequency.setValueAtTime(200, this.ctx.currentTime);
-                    osc.frequency.exponentialRampToValueAtTime(30, this.ctx.currentTime + 0.25);
-                    gain.gain.setValueAtTime(0.85, this.ctx.currentTime);
-                    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.25);
-                } else if (type === 'Sniper') {
-                    osc.type = 'sawtooth';
-                    osc.frequency.setValueAtTime(500, this.ctx.currentTime);
-                    osc.frequency.exponentialRampToValueAtTime(40, this.ctx.currentTime + 0.35);
-                    gain.gain.setValueAtTime(0.9, this.ctx.currentTime);
-                    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.35);
-                } else { // Spider-Blaster Web Shoot
-                    osc.type = 'square';
-                    osc.frequency.setValueAtTime(300, this.ctx.currentTime);
-                    osc.frequency.exponentialRampToValueAtTime(80, this.ctx.currentTime + 0.12);
-                    gain.gain.setValueAtTime(0.6, this.ctx.currentTime);
-                    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.12);
-                }
-
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(300, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(80, this.ctx.currentTime + 0.12);
+                gain.gain.setValueAtTime(0.6, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.12);
                 osc.connect(gain);
                 gain.connect(this.ctx.destination);
                 osc.start();
-                osc.stop(this.ctx.currentTime + 0.35);
-            }
-
-            playWebSound() {
-                if (this.ctx.state === 'suspended') this.ctx.resume();
-                let osc = this.ctx.createOscillator();
-                let gain = this.ctx.createGain();
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(350, this.ctx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(900, this.ctx.currentTime + 0.12);
-                gain.gain.setValueAtTime(0.4, this.ctx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.15);
-                osc.connect(gain);
-                gain.connect(this.ctx.destination);
-                osc.start();
-                osc.stop(this.ctx.currentTime + 0.15);
+                osc.stop(this.ctx.currentTime + 0.12);
             }
         }
-
         const sound = new SoundSystem();
 
-        // --- Babylon.js 3D Spider-Man Engine ---
-        window.addEventListener('DOMContentLoaded', () => {
+        // --- Babylon.js 3D Engine Setup ---
+        function initGameEngine() {
             const canvas = document.getElementById("renderCanvas");
             const engine = new BABYLON.Engine(canvas, true, { preserveDrawingBuffer: true, stencil: true });
 
             const createScene = function () {
                 const scene = new BABYLON.Scene(engine);
-                scene.clearColor = new BABYLON.Color3(0.55, 0.8, 0.98); // Bright heroic sky blue
+                scene.clearColor = new BABYLON.Color3(0.55, 0.8, 0.98);
 
-                // Full-Screen Mobile Follow Camera
                 const camera = new BABYLON.FollowCamera("FollowCam", new BABYLON.Vector3(0, 9, -13), scene);
                 camera.radius = 7.5;
                 camera.heightOffset = 2.4;
-                camera.rotationOffset = 180; // Aligns camera behind the character correctly
+                camera.rotationOffset = 180;
                 camera.cameraAcceleration = 0.12;
                 camera.maxCameraSpeed = 20;
 
-                // Vibrant Hero Lighting
                 const light = new BABYLON.HemisphericLight("HemiLight", new BABYLON.Vector3(0, 1, 0), scene);
                 light.intensity = 1.2;
-                light.groundColor = new BABYLON.Color3(0.2, 0.4, 0.2);
 
-                const dirLight = new BABYLON.DirectionalLight("dir", new BABYLON.Vector2(-1, -2, 1), scene);
-                dirLight.position = new BABYLON.Vector3(20, 40, -20);
-                dirLight.intensity = 0.9;
-
-                // Ground Terrain
                 const ground = BABYLON.MeshBuilder.CreateGround("ground", { width: 180, height: 180, subdivisions: 2 }, scene);
                 const groundMat = new BABYLON.StandardMaterial("groundMat", scene);
                 groundMat.diffuseColor = new BABYLON.Color3(0.2, 0.65, 0.3);
-                groundMat.specularColor = new BABYLON.Color3(0, 0, 0);
                 ground.material = groundMat;
 
-                // Stylized Obstacle Buildings
-                const colors = [
-                    new BABYLON.Color3(0.9, 0.2, 0.2), // Red
-                    new BABYLON.Color3(0.1, 0.3, 0.8), // Blue
-                    new BABYLON.Color3(0.95, 0.8, 0.1) // Gold
-                ];
-
-                for (let i = 0; i < 18; i++) {
+                // Obstacles
+                for (let i = 0; i < 15; i++) {
                     let box = BABYLON.MeshBuilder.CreateBox("obs" + i, { size: 3.5 }, scene);
                     box.position.x = (Math.random() - 0.5) * 100;
                     box.position.z = (Math.random() - 0.5) * 100;
                     box.position.y = 1.75;
-
-                    let mat = new BABYLON.StandardMaterial("boxMat" + i, scene);
-                    mat.diffuseColor = colors[i % colors.length];
-                    box.material = mat;
                 }
 
-                // --- Spider-Man Character Model Construction ---
+                // Player (Spider-Man)
                 const player = BABYLON.MeshBuilder.CreateSphere("spiderBody", { diameter: 1.7, segments: 16 }, scene);
                 player.position = new BABYLON.Vector3(0, 1, 0);
-
-                // Spider-Man Red Suit Material
                 const spideyMat = new BABYLON.StandardMaterial("spideyMat", scene);
-                spideyMat.diffuseColor = new BABYLON.Color3(0.92, 0.12, 0.18); // Iconic Red
-                spideyMat.specularColor = new BABYLON.Color3(0.4, 0.4, 0.4);
+                spideyMat.diffuseColor = new BABYLON.Color3(0.92, 0.12, 0.18);
                 player.material = spideyMat;
 
-                // Blue Suit Shoulders/Hips Ring
                 let blueSuitRing = BABYLON.MeshBuilder.CreateCylinder("blueRing", { diameter: 1.72, height: 0.8 }, scene);
                 blueSuitRing.parent = player;
                 let blueMat = new BABYLON.StandardMaterial("bMat", scene);
-                blueMat.diffuseColor = new BABYLON.Color3(0.08, 0.2, 0.65); // Iconic Blue
+                blueMat.diffuseColor = new BABYLON.Color3(0.08, 0.2, 0.65);
                 blueSuitRing.material = blueMat;
-
-                // Big Spider-Man Cartoon Eyes
-                let leftEye = BABYLON.MeshBuilder.CreateBox("lEye", { width: 0.35, height: 0.45, depth: 0.3 }, scene);
-                leftEye.position = new BABYLON.Vector3(-0.32, 0.25, 0.7);
-                leftEye.rotation.z = 0.3;
-                leftEye.parent = player;
-
-                let rightEye = BABYLON.MeshBuilder.CreateBox("rEye", { width: 0.35, height: 0.45, depth: 0.3 }, scene);
-                rightEye.position = new BABYLON.Vector3(0.32, 0.25, 0.7);
-                rightEye.rotation.z = -0.3;
-                rightEye.parent = player;
-
-                let eyeMat = new BABYLON.StandardMaterial("eyeMat", scene);
-                eyeMat.diffuseColor = new BABYLON.Color3(1, 1, 1); // Pure white eyes
-                leftEye.material = eyeMat;
-                rightEye.material = eyeMat;
 
                 camera.lockedTarget = player;
 
-                // Safe Zone Ring (Battle Royale Storm)
-                const safeZone = BABYLON.MeshBuilder.CreateCylinder("safeZone", { diameter: 130, height: 80, tessellation: 36, sideOrientation: BABYLON.Mesh.BACKSIDE }, scene);
-                const zoneMat = new BABYLON.StandardMaterial("zoneMat", scene);
-                zoneMat.diffuseColor = new BABYLON.Color3(0.5, 0.1, 0.9);
-                zoneMat.alpha = 0.16;
-                safeZone.material = zoneMat;
-
-                // --- Weapon Slots System ---
-                const weapons = [
-                    { name: "SPIDER-BLASTER", ammo: 30, maxAmmo: 30, type: "AR" },
-                    { name: "WEB-SHOTGUN", ammo: 6, maxAmmo: 6, type: "Shotgun" },
-                    { name: "VENOM-SNIPER", ammo: 4, maxAmmo: 4, type: "Sniper" }
-                ];
-                let currentWeaponIndex = 0;
-
-                // --- Gloo Wall (Web Shield) System ---
-                let glooCount = 5;
-                let isPlacingGloo = false;
-                let previewGloo = null;
-
-                function setupGlooPreview() {
-                    if (previewGloo) previewGloo.dispose();
-                    previewGloo = BABYLON.MeshBuilder.CreateBox("preview", { width: 3.2, height: 2.6, depth: 0.9 }, scene);
-                    let pm = new BABYLON.StandardMaterial("pm", scene);
-                    pm.diffuseColor = new BABYLON.Color3(0.9, 0.9, 0.9); // Web white shield
-                    pm.alpha = 0.65;
-                    previewGloo.material = pm;
-                    updateGlooPos();
+                // Remote Friend Mesh (if online)
+                if (isOnline) {
+                    remotePlayerMesh = BABYLON.MeshBuilder.CreateSphere("friendBody", { diameter: 1.7, segments: 16 }, scene);
+                    remotePlayerMesh.position = new BABYLON.Vector3(5, 1, 5);
+                    let friendMat = new BABYLON.StandardMaterial("fMat", scene);
+                    friendMat.diffuseColor = new BABYLON.Color3(0.1, 0.8, 0.3); // Green suit for friend
+                    remotePlayerMesh.material = friendMat;
                 }
 
-                function updateGlooPos() {
-                    if (!previewGloo) return;
-                    let fwd = player.forward;
-                    previewGloo.position = player.position.add(fwd.scale(3.8));
-                    previewGloo.position.y = 1.3;
-                    previewGloo.rotation.y = player.rotation.y;
-                }
+                // AI Bot Enemy (for solo training)
+                const bot = BABYLON.MeshBuilder.CreateSphere("botEnemy", { diameter: 1.7, segments: 16 }, scene);
+                bot.position = new BABYLON.Vector3(15, 1, 15);
+                let botMat = new BABYLON.StandardMaterial("botMat", scene);
+                botMat.diffuseColor = new BABYLON.Color3(0.8, 0.2, 0.9); // Purple villain bot
+                bot.material = botMat;
 
-                function dropGloo() {
-                    if (glooCount <= 0) return;
-                    sound.playWebSound();
-                    let wall = BABYLON.MeshBuilder.CreateBox("webShield", { width: 3.2, height: 2.6, depth: 0.9 }, scene);
-                    wall.position = previewGloo.position.clone();
-                    wall.rotation.y = previewGloo.rotation.y;
+                // Controls State
+                let moveVector = new BABYLON.Vector3(0, 0, 0);
+                let isMoving = false;
+                let moveTouchId = null;
+                let isTurning = false;
+                let turnTouchId = null;
+                let lastTurnX = 0;
 
-                    let wm = new BABYLON.StandardMaterial("wm", scene);
-                    wm.diffuseColor = new BABYLON.Color3(0.95, 0.95, 0.95);
-                    wm.emissiveColor = new BABYLON.Color3(0.5, 0.5, 0.5);
-                    wall.material = wm;
-
-                    glooCount--;
-                    isPlacingGloo = false;
-                    if (previewGloo) { previewGloo.dispose(); previewGloo = null; }
-                }
-
-                // --- Touch HUD Controls ---
                 const advancedTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
 
-                // Movement Joystick (Left Bottom)
+                // Movement Joystick
                 let moveJoyBase = new BABYLON.GUI.Ellipse("moveBase");
-                moveJoyBase.width = "150px";
-                moveJoyBase.height = "150px";
-                moveJoyBase.left = "35px";
-                moveJoyBase.bottom = "35px";
-                moveJoyBase.color = "rgba(255, 255, 255, 0.4)";
-                moveJoyBase.thickness = 4;
+                moveJoyBase.width = "140px"; moveJoyBase.height = "140px";
+                moveJoyBase.left = "35px"; moveJoyBase.bottom = "35px";
+                moveJoyBase.color = "rgba(255, 255, 255, 0.4)"; moveJoyBase.thickness = 4;
                 moveJoyBase.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
                 moveJoyBase.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
                 advancedTexture.addControl(moveJoyBase);
 
                 let moveJoyThumb = new BABYLON.GUI.Ellipse("moveThumb");
-                moveJoyThumb.width = "65px";
-                moveJoyThumb.height = "65px";
-                moveJoyThumb.color = "rgba(225, 29, 72, 0.9)";
-                moveJoyThumb.background = "rgba(225, 29, 72, 0.6)";
+                moveJoyThumb.width = "60px"; moveJoyThumb.height = "60px";
+                moveJoyThumb.color = "rgba(225, 29, 72, 0.9)"; moveJoyThumb.background = "rgba(225, 29, 72, 0.6)";
                 moveJoyBase.addControl(moveJoyThumb);
-
-                let isMoving = false;
-                let moveTouchId = null;
-                let moveVector = new BABYLON.Vector3(0, 0, 0);
 
                 scene.onPointerObservable.add((pointerInfo) => {
                     if (pointerInfo.type === BABYLON.PointerEventTypes.POINTERDOWN) {
-                        if (pointerInfo.event.clientX < window.innerWidth / 2 && !isMoving) {
+                        let x = pointerInfo.event.clientX;
+                        let y = pointerInfo.event.clientY;
+                        if (x < window.innerWidth / 2 && !isMoving) {
                             isMoving = true;
                             moveTouchId = pointerInfo.event.pointerId;
+                        } else if (x >= window.innerWidth / 2 && y < window.innerHeight - 180 && !isTurning) {
+                            isTurning = true;
+                            turnTouchId = pointerInfo.event.pointerId;
+                            lastTurnX = x;
                         }
                     } else if (pointerInfo.type === BABYLON.PointerEventTypes.POINTERUP) {
-                        if (pointerInfo.event.pointerId === moveTouchId) {
-                            isMoving = false;
-                            moveTouchId = null;
-                            moveJoyThumb.left = 0;
-                            moveJoyThumb.top = 0;
-                            moveVector.set(0, 0, 0);
-                        }
+                        if (pointerInfo.event.pointerId === moveTouchId) { isMoving = false; moveTouchId = null; moveJoyThumb.left = 0; moveJoyThumb.top = 0; moveVector.set(0, 0, 0); }
+                        if (pointerInfo.event.pointerId === turnTouchId) { isTurning = false; turnTouchId = null; }
                     } else if (pointerInfo.type === BABYLON.PointerEventTypes.POINTERMOVE) {
+                        let x = pointerInfo.event.clientX;
+                        let y = pointerInfo.event.clientY;
                         if (isMoving && pointerInfo.event.pointerId === moveTouchId) {
-                            let rect = moveJoyBase._domElement ? moveJoyBase._domElement.getBoundingClientRect() : { left: 35, top: window.innerHeight - 185, width: 150, height: 150 };
-                            let centerX = rect.left + rect.width / 2;
-                            let centerY = rect.top + rect.height / 2;
-                            let dx = pointerInfo.event.clientX - centerX;
-                            let dy = pointerInfo.event.clientY - centerY;
+                            let rect = moveJoyBase._domElement ? moveJoyBase._domElement.getBoundingClientRect() : { left: 35, top: window.innerHeight - 175, width: 140, height: 140 };
+                            let dx = x - (rect.left + rect.width / 2);
+                            let dy = y - (rect.top + rect.height / 2);
                             let dist = Math.sqrt(dx * dx + dy * dy);
-                            let maxDist = 45;
-
-                            if (dist > maxDist) {
-                                dx = (dx / dist) * maxDist;
-                                dy = (dy / dist) * maxDist;
-                            }
-                            moveJoyThumb.left = dx + "px";
-                            moveJoyThumb.top = dy + "px";
-
-                            // FIXED MOVEMENT DIRECTION: Corrected axis mapping so joystick maps properly to camera forward/sides
-                            moveVector.x = -dx / maxDist;
-                            moveVector.z = dy / maxDist;
+                            if (dist > 45) { dx = (dx / dist) * 45; dy = (dy / dist) * 45; }
+                            moveJoyThumb.left = dx + "px"; moveJoyThumb.top = dy + "px";
+                            moveVector.x = -dx / 45; moveVector.z = dy / 45;
+                        }
+                        if (isTurning && pointerInfo.event.pointerId === turnTouchId) {
+                            camera.rotationOffset += (x - lastTurnX) * 0.5;
+                            lastTurnX = x;
                         }
                     }
                 });
 
-                // Right Action Buttons
-                // 1. Fire Button
+                // Fire Button
                 let fireButton = BABYLON.GUI.Button.CreateSimpleButton("fireBtn", "THWIP!");
-                fireButton.width = "90px";
-                fireButton.height = "90px";
-                fireButton.color = "white";
-                fireButton.background = "rgba(225, 29, 72, 0.9)";
-                fireButton.cornerRadius = 45;
-                fireButton.thickness = 4;
+                fireButton.width = "90px"; fireButton.height = "90px"; fireButton.color = "white";
+                fireButton.background = "rgba(225, 29, 72, 0.9)"; fireButton.cornerRadius = 45; fireButton.thickness = 4;
                 fireButton.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_RIGHT;
                 fireButton.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
-                fireButton.left = "-25px";
-                fireButton.bottom = "-25px";
+                fireButton.left = "-25px"; fireButton.bottom = "-25px";
                 advancedTexture.addControl(fireButton);
 
                 fireButton.onPointerUpObservable.add(() => {
-                    if (isPlacingGloo) {
-                        dropGloo();
-                        return;
-                    }
-
-                    let curW = weapons[currentWeaponIndex];
-                    if (curW.ammo > 0) {
-                        curW.ammo--;
-                        document.getElementById("ammo-val").innerText = curW.ammo;
-                        sound.playGunshot(curW.type);
-
-                        // Spider-Man action squash and stretch bounce
-                        player.scaling = new BABYLON.Vector3(1.2, 0.8, 1.2);
-                        setTimeout(() => player.scaling = new BABYLON.Vector3(1, 1, 1), 90);
-                    } else {
-                        sound.playWebSound();
-                        curW.ammo = curW.maxAmmo;
-                        document.getElementById("ammo-val").innerText = curW.ammo;
-                    }
+                    sound.playGunshot();
+                    player.scaling = new BABYLON.Vector3(1.2, 0.8, 1.2);
+                    setTimeout(() => player.scaling = new BABYLON.Vector3(1, 1, 1), 90);
                 });
 
-                // 2. Weapon Slot Switcher Button
-                let slotButton = BABYLON.GUI.Button.CreateSimpleButton("slotBtn", "GUN 🔄");
-                slotButton.width = "80px";
-                slotButton.height = "48px";
-                slotButton.color = "white";
-                slotButton.background = "rgba(15, 23, 42, 0.9)";
-                slotButton.cornerRadius = 10;
-                slotButton.thickness = 3;
-                slotButton.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_RIGHT;
-                slotButton.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
-                slotButton.left = "-135px";
-                slotButton.bottom = "-40px";
-                advancedTexture.addControl(slotButton);
-
-                slotButton.onPointerUpObservable.add(() => {
-                    if (isPlacingGloo) {
-                        isPlacingGloo = false;
-                        if (previewGloo) { previewGloo.dispose(); previewGloo = null; }
-                    }
-                    currentWeaponIndex = (currentWeaponIndex + 1) % weapons.length;
-                    let curW = weapons[currentWeaponIndex];
-                    document.getElementById("weapon-val").innerText = curW.name;
-                    document.getElementById("ammo-val").innerText = curW.ammo;
-                    sound.playWebSound();
-                });
-
-                // 3. Web Shield (Gloo Wall) Button
-                let glooButton = BABYLON.GUI.Button.CreateSimpleButton("glooBtn", "WEB 🧱");
-                glooButton.width = "80px";
-                glooButton.height = "48px";
-                glooButton.color = "white";
-                glooButton.background = "rgba(14, 165, 233, 0.9)";
-                glooButton.cornerRadius = 10;
-                glooButton.thickness = 3;
-                glooButton.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_RIGHT;
-                glooButton.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
-                glooButton.left = "-135px";
-                glooButton.bottom = "-100px";
-                advancedTexture.addControl(glooButton);
-
-                glooButton.onPointerUpObservable.add(() => {
-                    if (glooCount > 0) {
-                        isPlacingGloo = !isPlacingGloo;
-                        if (isPlacingGloo) {
-                            setupGlooPreview();
-                        } else if (previewGloo) {
-                            previewGloo.dispose();
-                            previewGloo = null;
-                        }
-                    }
-                });
-
-                // Render Loop Execution
+                // Render loop
                 scene.registerBeforeRender(() => {
                     if (moveVector.length() > 0) {
                         let speed = 0.13;
                         let moveDir = new BABYLON.Vector3(moveVector.x, 0, moveVector.z);
-                        player.moveWithCollisions(moveDir.scale(speed));
-                        
-                        let targetAngle = Math.atan2(moveVector.x, moveVector.z);
-                        player.rotation.y = targetAngle;
+                        let camAngle = BABYLON.Tools.ToRadians(camera.rotationOffset);
+                        let rotatedX = moveDir.x * Math.cos(camAngle) - moveDir.z * Math.sin(camAngle);
+                        let rotatedZ = moveDir.x * Math.sin(camAngle) + moveDir.z * Math.cos(camAngle);
+                        let adjustedMove = new BABYLON.Vector3(rotatedX, 0, rotatedZ);
 
-                        if (isPlacingGloo) {
-                            updateGlooPos();
+                        player.moveWithCollisions(adjustedMove.scale(speed));
+                        player.rotation.y = Math.atan2(adjustedMove.x, adjustedMove.z);
+
+                        // Send position to friend if online
+                        if (isOnline && conn && conn.open) {
+                            conn.send({ type: 'update', x: player.position.x, z: player.position.z, rotY: player.rotation.y });
                         }
                     }
 
-                    if (safeZone.scaling.x > 0.35) {
-                        safeZone.scaling.x -= 0.00007;
-                        safeZone.scaling.z -= 0.00007;
+                    // Simple AI bot patrolling movement
+                    let botDir = player.position.subtract(bot.position);
+                    botDir.y = 0;
+                    if (botDir.length() > 3) {
+                        botDir.normalize();
+                        bot.moveWithCollisions(botDir.scale(0.04));
                     }
                 });
 
@@ -473,7 +409,7 @@
             const scene = createScene();
             engine.runRenderLoop(() => { scene.render(); });
             window.addEventListener("resize", () => { engine.resize(); });
-        });
+        }
     </script>
 </body>
 </html>
