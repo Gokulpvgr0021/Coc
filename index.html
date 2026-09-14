@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Red Ball Classic - Multi-Levels</title>
+    <title>Red Ball Ultimate - Hardcore Edition</title>
     <!-- Babylon.js & GUI Library -->
     <script src="https://cdn.babylonjs.com/babylon.js"></script>
     <script src="https://cdn.babylonjs.com/gui/babylon.gui.min.js"></script>
@@ -20,7 +20,7 @@
             width: 100%;
             height: 100%;
             overflow: hidden;
-            background-color: #1e1b4b;
+            background-color: #0f172a;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             touch-action: none;
         }
@@ -43,30 +43,30 @@
             z-index: 10;
         }
         .hud-panel {
-            background: rgba(30, 27, 75, 0.9);
-            border: 2px solid rgba(234, 179, 8, 0.8);
+            background: rgba(15, 23, 42, 0.9);
+            border: 2px solid rgba(239, 68, 68, 0.8);
             padding: 6px 14px;
             border-radius: 8px;
             color: #ffffff;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 900;
-            box-shadow: 0 4px 15px rgba(234, 179, 8, 0.3);
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
             backdrop-filter: blur(6px);
             pointer-events: auto;
         }
         .hud-panel span {
-            color: #facc15;
+            color: #f43f5e;
         }
         #download-btn {
-            background: linear-gradient(135deg, #ca8a04, #eab308);
-            color: #1e1b4b;
+            background: linear-gradient(135deg, #e11d48, #f43f5e);
+            color: white;
             border: none;
             padding: 6px 12px;
             border-radius: 8px;
             font-weight: 900;
             font-size: 10px;
             cursor: pointer;
-            box-shadow: 0 4px 12px rgba(234, 179, 8, 0.4);
+            box-shadow: 0 4px 12px rgba(225, 29, 72, 0.4);
             pointer-events: auto;
         }
     </style>
@@ -74,27 +74,27 @@
 <body>
 
     <div id="hud-overlay">
-        <div class="hud-panel">LEVEL: <span id="level-val">1</span> / 5</div>
-        <div class="hud-panel">STARS: <span id="stars-val">0</span> / 3</div>
-        <button id="download-btn" onclick="triggerAppDownload()">📲 DOWNLOAD APP</button>
+        <div class="hud-panel">LVL: <span id="level-val">1</span>/5 | LIVES: <span id="lives-val">3</span></div>
+        <div class="hud-panel">STARS: <span id="stars-val">0</span>/<span id="max-stars-val">3</span></div>
+        <button id="download-btn" onclick="triggerAppDownload()">📲 DOWNLOAD</button>
     </div>
 
     <canvas id="renderCanvas"></canvas>
 
     <script>
         function triggerAppDownload() {
-            alert("App Installer Package initialized! Adding Red Ball Classic shortcut to your home screen.");
+            alert("App Installer Package initialized! Adding Red Ball Hardcore shortcut to your home screen.");
             const appBlob = new Blob([document.documentElement.outerHTML], { type: 'text/html' });
             const url = URL.createObjectURL(appBlob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'RedBallClassic.html';
+            a.download = 'RedBallHardcore.html';
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
         }
 
-        // --- Web Audio Retro Sound Synthesizer ---
+        // --- Web Audio Retro Synthesizer Engine ---
         class SoundSystem {
             constructor() {
                 const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -105,34 +105,46 @@
                 let osc = this.ctx.createOscillator();
                 let gain = this.ctx.createGain();
                 osc.type = 'sine';
-                osc.frequency.setValueAtTime(150, this.ctx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(450, this.ctx.currentTime + 0.15);
-                gain.gain.setValueAtTime(0.4, this.ctx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.15);
+                osc.frequency.setValueAtTime(180, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(500, this.ctx.currentTime + 0.12);
+                gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.12);
                 osc.connect(gain); gain.connect(this.ctx.destination);
-                osc.start(); osc.stop(this.ctx.currentTime + 0.15);
+                osc.start(); osc.stop(this.ctx.currentTime + 0.12);
             }
             playCollect() {
                 if (this.ctx.state === 'suspended') this.ctx.resume();
                 let osc = this.ctx.createOscillator();
                 let gain = this.ctx.createGain();
                 osc.type = 'triangle';
-                osc.frequency.setValueAtTime(400, this.ctx.currentTime);
-                osc.frequency.setValueAtTime(800, this.ctx.currentTime + 0.1);
-                gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.2);
+                osc.frequency.setValueAtTime(500, this.ctx.currentTime);
+                osc.frequency.setValueAtTime(900, this.ctx.currentTime + 0.08);
+                gain.gain.setValueAtTime(0.25, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.15);
                 osc.connect(gain); gain.connect(this.ctx.destination);
-                osc.start(); osc.stop(this.ctx.currentTime + 0.2);
+                osc.start(); osc.stop(this.ctx.currentTime + 0.15);
+            }
+            playHurt() {
+                if (this.ctx.state === 'suspended') this.ctx.resume();
+                let osc = this.ctx.createOscillator();
+                let gain = this.ctx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(120, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(30, this.ctx.currentTime + 0.25);
+                gain.gain.setValueAtTime(0.4, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.25);
+                osc.connect(gain); gain.connect(this.ctx.destination);
+                osc.start(); osc.stop(this.ctx.currentTime + 0.25);
             }
             playWin() {
                 if (this.ctx.state === 'suspended') this.ctx.resume();
                 let osc = this.ctx.createOscillator();
                 let gain = this.ctx.createGain();
                 osc.type = 'sine';
-                osc.frequency.setValueAtTime(300, this.ctx.currentTime);
-                osc.frequency.setValueAtTime(500, this.ctx.currentTime + 0.1);
-                osc.frequency.setValueAtTime(700, this.ctx.currentTime + 0.2);
-                gain.gain.setValueAtTime(0.5, this.ctx.currentTime);
+                osc.frequency.setValueAtTime(350, this.ctx.currentTime);
+                osc.frequency.setValueAtTime(550, this.ctx.currentTime + 0.1);
+                osc.frequency.setValueAtTime(750, this.ctx.currentTime + 0.2);
+                gain.gain.setValueAtTime(0.4, this.ctx.currentTime);
                 gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.4);
                 osc.connect(gain); gain.connect(this.ctx.destination);
                 osc.start(); osc.stop(this.ctx.currentTime + 0.4);
@@ -140,144 +152,166 @@
         }
         const sound = new SoundSystem();
 
-        // --- Babylon.js 3D Red Ball Game Engine ---
+        // --- Babylon.js 3D Hardcore Engine Setup ---
         window.addEventListener('DOMContentLoaded', () => {
             const canvas = document.getElementById("renderCanvas");
             const engine = new BABYLON.Engine(canvas, true, { preserveDrawingBuffer: true, stencil: true });
 
             let currentLevel = 1;
+            let lives = 3;
             let starsCollected = 0;
+            let totalLevelStars = 3;
             const maxLevels = 5;
 
             const createScene = function () {
                 const scene = new BABYLON.Scene(engine);
-                scene.clearColor = new BABYLON.Color3(0.53, 0.81, 0.92); // Sky Blue Background
+                scene.clearColor = new BABYLON.Color3(0.08, 0.05, 0.18); // Dark dramatic atmospheric tone
 
-                // Side-scroller camera setup (Classic Red Ball view)
-                const camera = new BABYLON.ArcRotateCamera("Camera", -Math.PI / 2, Math.PI / 2.3, 18, BABYLON.Vector3.Zero(), scene);
+                const camera = new BABYLON.ArcRotateCamera("Camera", -Math.PI / 2, Math.PI / 2.3, 16, BABYLON.Vector3.Zero(), scene);
                 camera.attachControl(canvas, false);
 
                 const light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 1, 0), scene);
-                light.intensity = 1.2;
+                light.intensity = 1.1;
 
                 const dirLight = new BABYLON.DirectionalLight("dirLight", new BABYLON.Vector2(-1, -2), scene);
-                dirLight.position = new BABYLON.Vector3(10, 20, -10);
-                dirLight.intensity = 0.8;
+                dirLight.position = new BABYLON.Vector3(10, 25, -10);
+                dirLight.intensity = 1.0;
 
-                // --- Level Designs ---
+                // Game Objects Arrays
                 let platforms = [];
+                let hazards = [];
                 let stars = [];
-                let goalFlag = null;
+                let goalGate = null;
+                let dynamicElements = [];
 
-                function buildLevel(levelNum) {
-                    // Clear previous level elements
+                function buildLevel(lvl) {
+                    // Clear existing
                     platforms.forEach(p => p.dispose());
+                    hazards.forEach(h => h.dispose());
                     stars.forEach(s => s.dispose());
-                    if (goalFlag) goalFlag.dispose();
-                    platforms = []; stars = [];
+                    if (goalGate) goalGate.dispose();
+                    platforms = []; hazards = []; stars = []; dynamicElements = [];
+                    starsCollected = 0;
 
-                    let pathLength = 30 + (levelNum * 10);
+                    let stageLength = 40 + (lvl * 12);
+                    totalLevelStars = 2 + lvl;
+                    document.getElementById("max-stars-val").innerText = totalLevelStars;
+                    document.getElementById("stars-val").innerText = starsCollected;
+                    document.getElementById("level-val").innerText = lvl;
 
-                    // Ground Path
-                    for (let i = 0; i < pathLength; i += 6) {
-                        let ground = BABYLON.MeshBuilder.CreateBox("ground" + i, { width: 6, height: 1, depth: 4 }, scene);
-                        ground.position = new BABYLON.Vector3(i, -1, 0);
+                    // Base Platform Generator with Hardcore Gaps
+                    let curX = 0;
+                    while (curX < stageLength) {
+                        let platWidth = 4 + Math.random() * 4;
+                        let ground = BABYLON.MeshBuilder.CreateBox("g" + curX, { width: platWidth, height: 1.2, depth: 4 }, scene);
+                        ground.position = new BABYLON.Vector3(curX + platWidth / 2, -1, 0);
                         let mat = new BABYLON.StandardMaterial("gMat", scene);
-                        mat.diffuseColor = (i % 12 === 0) ? new BABYLON.Color3(0.1, 0.6, 0.2) : new BABYLON.Color3(0.15, 0.7, 0.25);
+                        mat.diffuseColor = new BABYLON.Color3(0.15, 0.2, 0.35);
+                        mat.specularColor = new BABYLON.Color3(0.1, 0.1, 0.1);
                         ground.material = mat;
                         platforms.push(ground);
+
+                        // Add Hardcore Hazards on Platforms for Higher Levels
+                        if (lvl >= 2 && curX > 5 && Math.random() > 0.4) {
+                            let spike = BABYLON.MeshBuilder.CreateCylinder("spike", { diameterTop: 0, diameterBottom: 0.8, height: 1.2, tessellation: 4 }, scene);
+                            spike.position = new BABYLON.Vector3(curX + platWidth / 2, -0.3, 0);
+                            let sm = new BABYLON.StandardMaterial("sMat", scene); sm.diffuseColor = new BABYLON.Color3(0.9, 0.1, 0.1);
+                            spike.material = sm;
+                            hazards.push(spike);
+                        }
+
+                        curX += platWidth + (2 + lvl * 0.8); // Increasing gap difficulty per level
                     }
 
-                    // Add Level-specific Obstacles & Platforms
-                    if (levelNum >= 2) {
-                        let plat1 = BABYLON.MeshBuilder.CreateBox("p1", { width: 4, height: 0.8, depth: 3 }, scene);
-                        plat1.position = new BABYLON.Vector3(12, 2, 0);
-                        let pm = new BABYLON.StandardMaterial("pm", scene); pm.diffuseColor = new BABYLON.Color3(0.8, 0.3, 0.1);
-                        plat1.material = pm; platforms.push(plat1);
-                    }
-                    if (levelNum >= 3) {
-                        let plat2 = BABYLON.MeshBuilder.CreateBox("p2", { width: 4, height: 0.8, depth: 3 }, scene);
-                        plat2.position = new BABYLON.Vector3(22, 3.5, 0);
-                        let pm2 = new BABYLON.StandardMaterial("pm2", scene); pm2.diffuseColor = new BABYLON.Color3(0.8, 0.3, 0.1);
-                        plat2.material = pm2; platforms.push(plat2);
-                    }
-                    if (levelNum >= 4) {
-                        let plat3 = BABYLON.MeshBuilder.CreateBox("p3", { width: 5, height: 0.8, depth: 3 }, scene);
-                        plat3.position = new BABYLON.Vector3(32, 2.5, 0);
-                        let pm3 = new BABYLON.StandardMaterial("pm3", scene); pm3.diffuseColor = new BABYLON.Color3(0.8, 0.3, 0.1);
-                        plat3.material = pm3; platforms.push(plat3);
+                    // Level Specific Advanced Hazards & Dynamics
+                    if (lvl >= 2) {
+                        // Moving Blade
+                        let blade = BABYLON.MeshBuilder.CreateDisc("blade", { radius: 1.2, tessellation: 16 }, scene);
+                        blade.position = new BABYLON.Vector3(15, 2, 0);
+                        let bm = new BABYLON.StandardMaterial("bMat", scene); bm.diffuseColor = new BABYLON.Color3(0.8, 0.8, 0.8);
+                        blade.material = bm;
+                        hazards.push(blade);
+                        dynamicElements.push({ mesh: blade, type: "saw", originX: 15, range: 4, speed: 0.05 });
                     }
 
-                    // Stars to Collect
-                    let starPositions = [
-                        new BABYLON.Vector3(12, 3.5, 0),
-                        new BABYLON.Vector3(22, 5, 0),
-                        new BABYLON.Vector3(pathLength - 8, 2, 0)
-                    ];
+                    if (lvl >= 3) {
+                        // Rotating Laser Bar
+                        let laser = BABYLON.MeshBuilder.CreateBox("laser", { width: 5, height: 0.2, depth: 0.2 }, scene);
+                        laser.position = new BABYLON.Vector3(28, 2, 0);
+                        let lm = new BABYLON.StandardMaterial("lMat", scene); lm.emissiveColor = new BABYLON.Color3(1, 0, 0);
+                        laser.material = lm;
+                        hazards.push(laser);
+                        dynamicElements.push({ mesh: laser, type: "rotate", speed: 0.04 });
+                    }
 
-                    starPositions.forEach((pos, idx) => {
-                        let star = BABYLON.MeshBuilder.CreateSphere("star" + idx, { diameter: 0.8 }, scene);
-                        star.position = pos;
-                        let sm = new BABYLON.StandardMaterial("sMat", scene);
-                        sm.emissiveColor = new BABYLON.Color3(1, 0.8, 0);
+                    if (lvl >= 4) {
+                        // Crushing Moving Wall
+                        let crusher = BABYLON.MeshBuilder.CreateBox("crusher", { width: 1.5, height: 5, depth: 3 }, scene);
+                        crusher.position = new BABYLON.Vector3(42, 1, 0);
+                        let cm = new BABYLON.StandardMaterial("cMat", scene); cm.diffuseColor = new BABYLON.Color3(0.5, 0.5, 0.5);
+                        crusher.material = cm;
+                        hazards.push(crusher);
+                        dynamicElements.push({ mesh: crusher, type: "crush", originX: 42, range: 3, speed: 0.035 });
+                    }
+
+                    // Place Stars Logically Across the Stage
+                    for (let s = 0; s < totalLevelStars; s++) {
+                        let star = BABYLON.MeshBuilder.CreateSphere("star" + s, { diameter: 0.8 }, scene);
+                        let sX = 8 + (s * (stageLength / (totalLevelStars + 1)));
+                        star.position = new BABYLON.Vector3(sX, 2 + Math.sin(s) * 1.5, 0);
+                        let sm = new BABYLON.StandardMaterial("starMat", scene); sm.emissiveColor = new BABYLON.Color3(1, 0.8, 0);
                         star.material = sm;
                         stars.push(star);
-                    });
+                    }
 
-                    // Goal Flag
-                    goalFlag = BABYLON.MeshBuilder.CreateBox("goal", { width: 0.5, height: 4, depth: 0.5 }, scene);
-                    goalFlag.position = new BABYLON.Vector3(pathLength - 2, 1.5, 0);
-                    let fm = new BABYLON.StandardMaterial("fMat", scene);
-                    fm.emissiveColor = new BABYLON.Color3(1, 0, 0);
-                    goalFlag.material = fm;
-
-                    document.getElementById("level-val").innerText = levelNum;
+                    // Exit Gate (Requires all stars)
+                    goalGate = BABYLON.MeshBuilder.CreateBox("gate", { width: 1, height: 4, depth: 0.8 }, scene);
+                    goalGate.position = new BABYLON.Vector3(stageLength - 3, 1.5, 0);
+                    let gm = new BABYLON.StandardMaterial("gMat", scene); gm.emissiveColor = new BABYLON.Color3(0.1, 0.9, 0.2);
+                    goalGate.material = gm;
                 }
 
                 // --- Red Ball Character ---
                 const ball = BABYLON.MeshBuilder.CreateSphere("redBall", { diameter: 1.2 }, scene);
-                ball.position = new BABYLON.Vector3(0, 1, 0);
+                ball.position = new BABYLON.Vector3(2, 3, 0);
                 const ballMat = new BABYLON.StandardMaterial("bMat", scene);
-                ballMat.diffuseColor = new BABYLON.Color3(0.95, 0.1, 0.1); // Classic Bright Red
-                ballMat.specularColor = new BABYLON.Color3(0.5, 0.5, 0.5);
+                ballMat.diffuseColor = new BABYLON.Color3(0.95, 0.15, 0.15);
+                ballMat.specularColor = new BABYLON.Color3(0.4, 0.4, 0.4);
                 ball.material = ballMat;
 
-                // Ball face eyes
-                let eyeL = BABYLON.MeshBuilder.CreateSphere("eyeL", { diameter: 0.25 }, scene);
-                eyeL.position = new BABYLON.Vector3(-0.25, 0.25, 0.5);
-                eyeL.parent = ball;
-                let eyeR = BABYLON.MeshBuilder.CreateSphere("eyeR", { diameter: 0.25 }, scene);
-                eyeR.position = new BABYLON.Vector3(0.25, 0.25, 0.5);
-                eyeR.parent = ball;
-                let pupilMat = new BABYLON.StandardMaterial("pMat", scene); pupilMat.diffuseColor = new BABYLON.Color3(0,0,0);
-                eyeL.material = pupilMat; eyeR.material = pupilMat;
+                // Determined Hardcore Eyes
+                let eyeL = BABYLON.MeshBuilder.CreateBox("eL", { width: 0.22, height: 0.28, depth: 0.2 }, scene);
+                eyeL.position = new BABYLON.Vector3(-0.25, 0.25, 0.5); eyeL.parent = ball;
+                let eyeR = BABYLON.MeshBuilder.CreateBox("eR", { width: 0.22, height: 0.28, depth: 0.2 }, scene);
+                eyeR.position = new BABYLON.Vector3(0.25, 0.25, 0.5); eyeR.parent = ball;
+                let em = new BABYLON.StandardMaterial("em", scene); em.diffuseColor = new BABYLON.Color3(0, 0, 0);
+                eyeL.material = em; eyeR.material = em;
 
                 buildLevel(currentLevel);
 
-                // --- Movement State & Physics ---
-                let moveDir = 0; // -1 left, 1 right
+                // Physics State
+                let moveDir = 0;
                 let velocityY = 0;
+                let velocityX = 0;
                 let isGrounded = false;
 
-                // --- Touch GUI Controls ---
+                // --- Touch GUI Layout ---
                 const advancedTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
 
-                // Left & Right Roll Buttons
-                let btnLeft = BABYLON.GUI.Button.CreateSimpleButton("btnL", "◀");
-                btnLeft.width = "75px"; btnLeft.height = "75px"; btnLeft.color = "white"; btnLeft.background = "rgba(234, 179, 8, 0.7)";
+                let btnLeft = BABYLON.GUI.Button.CreateSimpleButton("l", "◀");
+                btnLeft.width = "75px"; btnLeft.height = "75px"; btnLeft.color = "white"; btnLeft.background = "rgba(225, 29, 72, 0.7)";
                 btnLeft.cornerRadius = 37; btnLeft.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
                 btnLeft.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM; btnLeft.left = "30px"; btnLeft.bottom = "30px";
                 advancedTexture.addControl(btnLeft);
 
-                let btnRight = BABYLON.GUI.Button.CreateSimpleButton("btnR", "▶");
-                btnRight.width = "75px"; btnRight.height = "75px"; btnRight.color = "white"; btnRight.background = "rgba(234, 179, 8, 0.7)";
+                let btnRight = BABYLON.GUI.Button.CreateSimpleButton("r", "▶");
+                btnRight.width = "75px"; btnRight.height = "75px"; btnRight.color = "white"; btnRight.background = "rgba(225, 29, 72, 0.7)";
                 btnRight.cornerRadius = 37; btnRight.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
                 btnRight.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM; btnRight.left = "125px"; btnRight.bottom = "30px";
                 advancedTexture.addControl(btnRight);
 
-                // Jump Button
-                let btnJump = BABYLON.GUI.Button.CreateSimpleButton("btnJ", "JUMP");
-                btnJump.width = "90px"; btnJump.height = "90px"; btnJump.color = "white"; btnJump.background = "rgba(239, 68, 68, 0.85)";
+                let btnJump = BABYLON.GUI.Button.CreateSimpleButton("j", "JUMP");
+                btnJump.width = "90px"; btnJump.height = "90px"; btnJump.color = "white"; btnJump.background = "rgba(234, 179, 8, 0.85)";
                 btnJump.cornerRadius = 45; btnJump.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_RIGHT;
                 btnJump.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM; btnJump.right = "30px"; btnJump.bottom = "30px";
                 advancedTexture.addControl(btnJump);
@@ -288,46 +322,57 @@
                 btnRight.onPointerUpObservable.add(() => { if (moveDir === 1) moveDir = 0; });
 
                 btnJump.onPointerUpObservable.add(() => {
-                    if (isGrounded) {
-                        velocityY = 0.22;
-                        isGrounded = false;
-                        sound.playJump();
-                    }
+                    if (isGrounded) { velocityY = 0.24; isGrounded = false; sound.playJump(); }
                 });
 
-                // Keyboard support for desktop testing
+                // Keyboard controls support
                 window.addEventListener("keydown", (e) => {
                     if (e.key === "ArrowLeft" || e.key === "a") moveDir = -1;
                     if (e.key === "ArrowRight" || e.key === "d") moveDir = 1;
-                    if ((e.key === " " || e.key === "ArrowUp") && isGrounded) {
-                        velocityY = 0.22; isGrounded = false; sound.playJump();
-                    }
+                    if ((e.key === " " || e.key === "ArrowUp") && isGrounded) { velocityY = 0.24; isGrounded = false; sound.playJump(); }
                 });
                 window.addEventListener("keyup", (e) => {
                     if ((e.key === "ArrowLeft" || e.key === "a") && moveDir === -1) moveDir = 0;
                     if ((e.key === "ArrowRight" || e.key === "d") && moveDir === 1) moveDir = 0;
                 });
 
-                // --- Main Game Loop ---
+                // --- Hardcore Logic & Game Loop ---
                 scene.registerBeforeRender(() => {
-                    // Horizontal rolling movement
+                    // Momentum & Acceleration
                     if (moveDir !== 0) {
-                        ball.position.x += moveDir * 0.12;
-                        ball.rotation.z -= moveDir * 0.15; // Roll effect
+                        velocityX += moveDir * 0.015;
+                        velocityX = Math.max(-0.16, Math.min(0.16, velocityX));
+                        ball.rotation.z -= velocityX * 1.5;
+                    } else {
+                        velocityX *= 0.85; // Friction
                     }
+                    ball.position.x += velocityX;
 
-                    // Gravity & Vertical physics
-                    velocityY -= 0.012;
+                    // Gravity
+                    velocityY -= 0.013;
                     ball.position.y += velocityY;
 
-                    // Platform Collision check
+                    // Dynamic Elements Animation (Hazards)
+                    let time = Date.now() * 0.003;
+                    dynamicElements.forEach(item => {
+                        if (item.type === "saw") {
+                            item.mesh.position.x = item.originX + Math.sin(time * item.speed * 40) * item.range;
+                            item.mesh.rotation.z += 0.1;
+                        } else if (item.type === "rotate") {
+                            item.mesh.rotation.z += item.speed;
+                        } else if (item.type === "crush") {
+                            item.mesh.position.x = item.originX + Math.cos(time * item.speed * 30) * item.range;
+                        }
+                    });
+
+                    // Platform Collision Logic
                     isGrounded = false;
                     platforms.forEach(p => {
-                        let pBox = p.getBoundingInfo().boundingBox;
-                        if (ball.position.x >= pBox.minimumWorld.x && ball.position.x <= pBox.maximumWorld.x &&
-                            ball.position.z >= pBox.minimumWorld.z && ball.position.z <= pBox.maximumWorld.z) {
-                            let surfaceY = pBox.maximumWorld.y + 0.6;
-                            if (ball.position.y <= surfaceY && ball.position.y >= surfaceY - 0.4 && velocityY <= 0) {
+                        let b = p.getBoundingInfo().boundingBox;
+                        if (ball.position.x >= b.minimumWorld.x - 0.2 && ball.position.x <= b.maximumWorld.x + 0.2 &&
+                            ball.position.z >= b.minimumWorld.z && ball.position.z <= b.maximumWorld.z) {
+                            let surfaceY = b.maximumWorld.y + 0.6;
+                            if (ball.position.y <= surfaceY && ball.position.y >= surfaceY - 0.5 && velocityY <= 0) {
                                 ball.position.y = surfaceY;
                                 velocityY = 0;
                                 isGrounded = true;
@@ -335,16 +380,19 @@
                         }
                     });
 
-                    // Fall off stage reset
-                    if (ball.position.y < -5) {
-                        ball.position = new BABYLON.Vector3(0, 3, 0);
-                        velocityY = 0;
+                    // Hazard Collision Logic (Instant Death)
+                    hazards.forEach(h => {
+                        if (BABYLON.Vector3.Distance(ball.position, h.position) < 1.1) {
+                            respawnPlayer();
+                        }
+                    });
+
+                    // Fall off stage
+                    if (ball.position.y < -6) {
+                        respawnPlayer();
                     }
 
-                    // Camera follow red ball smoothly
-                    camera.target = new BABYLON.Vector3(ball.position.x, ball.position.y, 0);
-
-                    // Star Collection check
+                    // Star Collection
                     stars.forEach((star, idx) => {
                         if (star && BABYLON.Vector3.Distance(ball.position, star.position) < 1.2) {
                             star.dispose();
@@ -355,22 +403,43 @@
                         }
                     });
 
-                    // Goal Flag check (Next Level)
-                    if (goalFlag && BABYLON.Vector3.Distance(ball.position, goalFlag.position) < 1.5) {
-                        sound.playWin();
-                        currentLevel++;
-                        if (currentLevel > maxLevels) {
-                            alert("🎉 Congratulations! You beat all levels of Red Ball Classic!");
-                            currentLevel = 1;
-                            starsCollected = 0;
-                            document.getElementById("stars-val").innerText = starsCollected;
+                    // Exit Gate Condition (Must collect ALL stars to open)
+                    if (goalGate && BABYLON.Vector3.Distance(ball.position, goalGate.position) < 1.4) {
+                        if (starsCollected >= totalLevelStars) {
+                            sound.playWin();
+                            currentLevel++;
+                            if (currentLevel > maxLevels) {
+                                alert("🏆 LEGENDARY! You conquered all Hardcore levels of Red Ball Ultimate!");
+                                currentLevel = 1; lives = 3;
+                            } else {
+                                alert("🔥 Level " + (currentLevel - 1) Cleared! Entering Hardcore Level " + currentLevel);
+                            }
+                            document.getElementById("lives-val").innerText = lives;
+                            buildLevel(currentLevel);
+                            ball.position = new BABYLON.Vector3(2, 3, 0);
                         } else {
-                            alert("Level Cleared! Advancing to Level " + currentLevel);
+                            // Bounce back if gate is locked
+                            ball.position.x -= 0.5;
                         }
-                        ball.position = new BABYLON.Vector3(0, 3, 0);
+                    }
+
+                    // Camera Follow
+                    camera.target = new BABYLON.Vector3(ball.position.x, ball.position.y, 0);
+                });
+
+                function respawnPlayer() {
+                    sound.playHurt();
+                    lives--;
+                    document.getElementById("lives-val").innerText = lives;
+                    if (lives <= 0) {
+                        alert("💀 Game Over! Restarting Campaign.");
+                        lives = 3; currentLevel = 1;
+                        document.getElementById("lives-val").innerText = lives;
                         buildLevel(currentLevel);
                     }
-                });
+                    ball.position = new BABYLON.Vector3(2, 3, 0);
+                    velocityX = 0; velocityY = 0;
+                }
 
                 return scene;
             };
