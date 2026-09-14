@@ -3,450 +3,448 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mixed Emoji Blast - World's Newest Game</title>
+    <title>Battle Royale Ultimate - Mobile Edition</title>
+    <!-- Load Babylon.js and GUI library -->
+    <script src="https://cdn.babylonjs.com/babylon.js"></script>
+    <script src="https://cdn.babylonjs.com/gui/babylon.gui.min.js"></script>
     <style>
-        * {
-            box-sizing: border-box;
-            touch-action: none;
+        body, html {
             margin: 0;
             padding: 0;
-        }
-
-        body {
-            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: space-between;
-            width: 100vw;
-            height: 100vh;
-            overflow: hidden;
-            color: white;
-            user-select: none;
-            padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom) 0;
-        }
-
-        header {
-            text-align: center;
-            padding-top: 10px;
-        }
-
-        h1 {
-            color: #38bdf8;
-            font-size: 20px;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            text-shadow: 0 0 10px rgba(56, 189, 248, 0.6);
-        }
-
-        .hud {
-            display: flex;
-            gap: 12px;
-            background: rgba(255, 255, 255, 0.08);
-            padding: 6px 14px;
-            border-radius: 12px;
-            border: 2px solid rgba(56, 189, 248, 0.3);
-            font-size: 13px;
-            font-weight: bold;
-            backdrop-filter: blur(5px);
-            box-shadow: 0 6px 12px rgba(0,0,0,0.4);
-            margin-top: 5px;
-        }
-
-        .hud span {
-            color: #f43f5e;
-        }
-
-        .board-container {
-            position: relative;
-            background: rgba(0, 0, 0, 0.5);
-            padding: 6px;
-            border-radius: 16px;
-            border: 4px solid #38bdf8;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.8), inset 0 0 15px rgba(0,0,0,0.6);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(8, 11vw);
-            grid-template-rows: repeat(8, 11vw);
-            max-width: 380px;
-            max-height: 380px;
-            gap: 3px;
-        }
-
-        @media (min-width: 450px) {
-            .grid {
-                grid-template-columns: repeat(8, 44px);
-                grid-template-rows: repeat(8, 44px);
-            }
-        }
-
-        .tile {
             width: 100%;
             height: 100%;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            cursor: pointer;
-            transition: transform 0.1s;
-            background: rgba(255, 255, 255, 0.05);
-            box-shadow: inset 0 2px 4px rgba(255,255,255,0.2), 0 3px 6px rgba(0,0,0,0.3);
+            overflow: hidden;
+            background-color: #030712;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            touch-action: none;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
         }
-
-        .tile.dragging {
-            transform: scale(1.25);
-            z-index: 10;
-            filter: brightness(1.3);
-            background: rgba(56, 189, 248, 0.3);
+        #renderCanvas {
+            width: 100%;
+            height: 100%;
+            touch-action: none;
+            outline: none;
         }
-
-        .modal {
+        #hud-overlay {
             position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(15, 23, 42, 0.95);
-            backdrop-filter: blur(8px);
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 30;
-            text-align: center;
-            padding: 20px;
+            top: 12px;
+            left: 12px;
+            right: 12px;
+            display: flex;
+            justify-content: space-between;
+            pointer-events: none;
+            z-index: 10;
         }
-
-        .modal h2 {
-            color: #38bdf8;
-            font-size: 28px;
-            margin-bottom: 8px;
-            text-shadow: 0 0 15px rgba(56, 189, 248, 0.7);
-        }
-
-        .modal p {
-            font-size: 15px;
-            margin: 4px 0;
-            color: #f43f5e;
-        }
-        
-        .btn-action {
-            background: linear-gradient(to bottom, #0ea5e9, #0284c7);
-            border: 2px solid #bae6fd;
-            color: white;
-            padding: 12px 28px;
-            font-size: 15px;
-            font-weight: bold;
-            border-radius: 12px;
-            cursor: pointer;
-            margin-top: 15px;
-            box-shadow: 0 6px 15px rgba(14, 165, 233, 0.5);
-        }
-        .btn-action:hover { filter: brightness(1.1); }
-
-        footer {
-            padding-bottom: 15px;
+        .hud-panel {
+            background: rgba(15, 23, 42, 0.85);
+            border: 1px solid rgba(56, 189, 248, 0.4);
+            padding: 6px 12px;
+            border-radius: 6px;
+            color: #f8fafc;
             font-size: 11px;
-            color: #94a3b8;
-            text-align: center;
+            font-weight: bold;
+            box-shadow: 0 0 12px rgba(56, 189, 248, 0.25);
+            backdrop-filter: blur(4px);
+        }
+        .hud-panel span {
+            color: #38bdf8;
         }
     </style>
 </head>
 <body>
 
-    <header>
-        <h1>Emoji Blast</h1>
-        <div class="hud">
-            <div>Level: <span id="level-display">1</span></div>
-            <div>Score: <span id="score">0</span>/<span id="target-score">300</span></div>
-            <div>Moves: <span id="moves">22</span></div>
-        </div>
-    </header>
-
-    <div class="board-container">
-        <div class="grid" id="grid"></div>
-
-        <div class="modal" id="modal">
-            <h2 id="modal-title">Level Cleared!</h2>
-            <p id="modal-text">Amazing moves! Ready for the next challenge?</p>
-            <button class="btn-action" id="modal-btn" onclick="nextLevel()">Next Level</button>
-        </div>
+    <div id="hud-overlay">
+        <div class="hud-panel">HP: <span id="health-val">100</span></div>
+        <div class="hud-panel">GUN: <span id="weapon-val">AR M4A1</span></div>
+        <div class="hud-panel">AMMO: <span id="ammo-val">30</span>/30</div>
     </div>
 
-    <footer>
-        Swipe/Drag emojis to match 3 or more & score points!
-    </footer>
+    <canvas id="renderCanvas"></canvas>
 
     <script>
-        const width = 8;
-        const emojis = ['🔥', '⭐', '💎', '🚀', '⚡', '🍀'];
-        
-        let level = 1;
-        let score = 0;
-        let targetScore = 300;
-        let moves = 22;
-        let board = [];
-        let isProcessing = false;
+        // --- Web Audio API Procedural Sound Engine ---
+        class SoundSystem {
+            constructor() {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                this.ctx = new AudioContext();
+            }
 
-        let touchStartIndex = null;
-        let startX = 0;
-        let startY = 0;
+            playGunshot(type) {
+                if (this.ctx.state === 'suspended') this.ctx.resume();
+                let osc = this.ctx.createOscillator();
+                let gain = this.ctx.createGain();
+                let filter = this.ctx.createBiquadFilter();
 
-        const gridElement = document.getElementById('grid');
-        const scoreDisplay = document.getElementById('score');
-        const targetDisplay = document.getElementById('target-score');
-        const movesDisplay = document.getElementById('moves');
-        const levelDisplay = document.getElementById('level-display');
-        const modal = document.getElementById('modal');
-        const modalTitle = document.getElementById('modal-title');
-        const modalText = document.getElementById('modal-text');
-        const modalBtn = document.getElementById('modal-btn');
-
-        function initGame() {
-            score = 0;
-            moves = Math.max(15, 24 - (level * 2));
-            targetScore = level * 350;
-            isProcessing = false;
-            modal.style.display = 'none';
-
-            scoreDisplay.innerText = score;
-            targetDisplay.innerText = targetScore;
-            movesDisplay.innerText = moves;
-            levelDisplay.innerText = level;
-
-            do {
-                board = [];
-                for (let i = 0; i < width * width; i++) {
-                    board.push(emojis[Math.floor(Math.random() * emojis.length)]);
+                if (type === 'Shotgun') {
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(100, this.ctx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(10, this.ctx.currentTime + 0.3);
+                    gain.gain.setValueAtTime(0.9, this.ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.3);
+                } else if (type === 'Sniper') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(300, this.ctx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(20, this.ctx.currentTime + 0.4);
+                    gain.gain.setValueAtTime(1.0, this.ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.4);
+                } else { // AR M4A1
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(160, this.ctx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(15, this.ctx.currentTime + 0.15);
+                    gain.gain.setValueAtTime(0.7, this.ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.15);
                 }
-            } while (checkInitialMatches());
 
-            renderBoard();
-        }
+                filter.type = 'lowpass';
+                filter.frequency.setValueAtTime(900, this.ctx.currentTime);
 
-        function checkInitialMatches() {
-            for (let i = 0; i < 64; i++) {
-                let row = Math.floor(i / width);
-                let col = i % width;
-                if (col < 6 && board[i] === board[i+1] && board[i] === board[i+2]) return true;
-                if (row < 6 && board[i] === board[i+width] && board[i] === board[i+width*2]) return true;
+                osc.connect(filter);
+                filter.connect(gain);
+                gain.connect(this.ctx.destination);
+
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.4);
             }
-            return false;
+
+            playSwitch() {
+                if (this.ctx.state === 'suspended') this.ctx.resume();
+                let osc = this.ctx.createOscillator();
+                let gain = this.ctx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(500, this.ctx.currentTime);
+                osc.frequency.setValueAtTime(700, this.ctx.currentTime + 0.05);
+                gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.1);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.1);
+            }
+
+            playGlooWall() {
+                if (this.ctx.state === 'suspended') this.ctx.resume();
+                let osc = this.ctx.createOscillator();
+                let gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(200, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(600, this.ctx.currentTime + 0.2);
+                gain.gain.setValueAtTime(0.5, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.25);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.25);
+            }
         }
 
-        function renderBoard() {
-            gridElement.innerHTML = '';
-            board.forEach((emoji, index) => {
-                const cell = document.createElement('div');
-                cell.classList.add('tile');
-                cell.innerText = emoji;
-                cell.dataset.index = index;
+        const sound = new SoundSystem();
 
-                cell.addEventListener('pointerdown', (e) => handlePointerDown(e, index));
-                gridElement.appendChild(cell);
-            });
-        }
+        // --- Babylon.js 3D Engine & Scene Initialization ---
+        window.addEventListener('DOMContentLoaded', () => {
+            const canvas = document.getElementById("renderCanvas");
+            const engine = new BABYLON.Engine(canvas, true, { preserveDrawingBuffer: true, stencil: true });
 
-        function handlePointerDown(e, index) {
-            if (isProcessing || moves <= 0) return;
-            touchStartIndex = index;
-            startX = e.clientX;
-            startY = e.clientY;
+            const createScene = function () {
+                const scene = new BABYLON.Scene(engine);
+                scene.clearColor = new BABYLON.Color3(0.02, 0.05, 0.1);
 
-            let targetCell = gridElement.children[index];
-            if (targetCell) targetCell.classList.add('dragging');
+                // Responsive Follow Camera
+                const camera = new BABYLON.FollowCamera("FollowCam", new BABYLON.Vector3(0, 10, -15), scene);
+                camera.radius = 7.5;
+                camera.heightOffset = 2.8;
+                camera.rotationOffset = 0;
+                camera.cameraAcceleration = 0.08;
+                camera.maxCameraSpeed = 15;
 
-            window.addEventListener('pointerup', handlePointerUp, { once: true });
-        }
+                // Lighting & Shadows
+                const light = new BABYLON.DirectionalLight("sun", new BABYLON.Vector2(-0.4, -1, 0.4), scene);
+                light.position = new BABYLON.Vector3(25, 45, -25);
+                light.intensity = 1.9;
 
-        function handlePointerUp(e) {
-            if (touchStartIndex === null) return;
+                const shadowGenerator = new BABYLON.ShadowGenerator(1024, light);
+                shadowGenerator.useBlurExponentialShadowMap = true;
+                shadowGenerator.blurKernel = 32;
 
-            let endX = e.clientX;
-            let endY = e.clientY;
-            let diffX = endX - startX;
-            let diffY = endY - startY;
+                const ambientLight = new BABYLON.HemisphericLight("ambient", new BABYLON.Vector3(0, 1, 0), scene);
+                ambientLight.intensity = 0.65;
+                ambientLight.groundColor = new BABYLON.Color3(0.1, 0.15, 0.2);
 
-            let targetIndex = null;
-            let threshold = 15;
+                // Terrain Ground
+                const ground = BABYLON.MeshBuilder.CreateGround("ground", { width: 160, height: 160, subdivisions: 20 }, scene);
+                const groundMat = new BABYLON.PBRMaterial("groundMat", scene);
+                groundMat.metallic = 0.05;
+                groundMat.roughness = 0.85;
+                groundMat.albedoColor = new BABYLON.Color3(0.12, 0.2, 0.12);
+                ground.material = groundMat;
+                ground.receiveShadows = true;
 
-            if (Math.abs(diffX) > Math.abs(diffY)) {
-                if (diffX > threshold && touchStartIndex % width < width - 1) {
-                    targetIndex = touchStartIndex + 1;
-                } else if (diffX < -threshold && touchStartIndex % width > 0) {
-                    targetIndex = touchStartIndex - 1;
+                // Environment Cover Obstacles
+                for (let i = 0; i < 15; i++) {
+                    let box = BABYLON.MeshBuilder.CreateBox("obstacle" + i, { size: 3.5 }, scene);
+                    box.position.x = (Math.random() - 0.5) * 90;
+                    box.position.z = (Math.random() - 0.5) * 90;
+                    box.position.y = 1.75;
+                    
+                    let boxMat = new BABYLON.PBRMaterial("boxMat" + i, scene);
+                    boxMat.metallic = 0.3;
+                    boxMat.roughness = 0.5;
+                    boxMat.albedoColor = new BABYLON.Color3(0.25, 0.28, 0.32);
+                    box.material = boxMat;
+                    shadowGenerator.addShadowCaster(box);
                 }
-            } else {
-                if (diffY > threshold && touchStartIndex < width * (width - 1)) {
-                    targetIndex = touchStartIndex + width;
-                } else if (diffY < -threshold && touchStartIndex >= width) {
-                    targetIndex = touchStartIndex - width;
+
+                // Player Character Model
+                const player = BABYLON.MeshBuilder.CreateCapsule("player", { radius: 0.55, height: 1.9 }, scene);
+                player.position = new BABYLON.Vector3(0, 0.95, 0);
+                
+                const playerMat = new BABYLON.PBRMaterial("playerMat", scene);
+                playerMat.metallic = 0.2;
+                playerMat.roughness = 0.4;
+                playerMat.albedoColor = new BABYLON.Color3(0.04, 0.2, 0.45); // Tactical Blue Uniform
+                player.material = playerMat;
+                shadowGenerator.addShadowCaster(player);
+                camera.lockedTarget = player;
+
+                // Safe Zone Barrier (Blue Zone)
+                const safeZone = BABYLON.MeshBuilder.CreateCylinder("safeZone", { diameter: 110, height: 60, tessellation: 36, sideOrientation: BABYLON.Mesh.BACKSIDE }, scene);
+                const zoneMat = new BABYLON.StandardMaterial("zoneMat", scene);
+                zoneMat.diffuseColor = new BABYLON.Color3(0, 0.4, 1);
+                zoneMat.alpha = 0.12;
+                zoneMat.emissiveColor = new BABYLON.Color3(0, 0.25, 0.9);
+                safeZone.material = zoneMat;
+
+                // --- Weapon Slots System ---
+                const weapons = [
+                    { name: "AR M4A1", ammo: 30, maxAmmo: 30, type: "AR" },
+                    { name: "M1887 Shotgun", ammo: 8, maxAmmo: 8, type: "Shotgun" },
+                    { name: "AWM Sniper", ammo: 5, maxAmmo: 5, type: "Sniper" }
+                ];
+                let currentWeaponIndex = 0;
+
+                // --- Glow Wall (Gloo Wall) System ---
+                let glooWallCount = 3;
+                let isPlacingGlooWall = false;
+                let previewGlooWall = null;
+
+                function createGlooWallPreview() {
+                    if (previewGlooWall) previewGlooWall.dispose();
+                    previewGlooWall = BABYLON.MeshBuilder.CreateBox("glooPreview", { width: 3, height: 2.5, depth: 0.8 }, scene);
+                    let pMat = new BABYLON.StandardMaterial("glooPMat", scene);
+                    pMat.diffuseColor = new BABYLON.Color3(0, 0.8, 1);
+                    pMat.alpha = 0.5;
+                    previewGlooWall.material = pMat;
+                    updateGlooWallPreviewPosition();
                 }
-            }
 
-            let oldCell = gridElement.children[touchStartIndex];
-            if (oldCell) oldCell.classList.remove('dragging');
-
-            if (targetIndex !== null) {
-                executeSwipe(touchStartIndex, targetIndex);
-            }
-
-            touchStartIndex = null;
-        }
-
-        function executeSwipe(i1, i2) {
-            isProcessing = true;
-            swapTiles(i1, i2);
-
-            let matched = checkMatches();
-            if (matched) {
-                moves--;
-                movesDisplay.innerText = moves;
-                processMatches();
-            } else {
-                setTimeout(() => {
-                    swapTiles(i1, i2);
-                    isProcessing = false;
-                }, 150);
-            }
-
-            checkGameProgress();
-        }
-
-        function swapTiles(i1, i2) {
-            let temp = board[i1];
-            board[i1] = board[i2];
-            board[i2] = temp;
-            renderBoard();
-        }
-
-        function checkMatches() {
-            for (let r = 0; r < width; r++) {
-                for (let c = 0; c < width - 2; c++) {
-                    let idx = r * width + c;
-                    if (board[idx] && board[idx] === board[idx+1] && board[idx] === board[idx+2]) return true;
+                function updateGlooWallPreviewPosition() {
+                    if (!previewGlooWall) return;
+                    let fwd = player.forward;
+                    previewGlooWall.position = player.position.add(fwd.scale(3.5));
+                    previewGlooWall.position.y = 1.25;
+                    previewGlooWall.rotation.y = player.rotation.y;
                 }
-            }
-            for (let r = 0; r < width - 2; r++) {
-                for (let c = 0; c < width; c++) {
-                    let idx = r * width + c;
-                    if (board[idx] && board[idx] === board[idx+width] && board[idx] === board[idx+width*2]) return true;
-                }
-            }
-            return false;
-        }
 
-        function processMatches() {
-            let clearedIndices = new Set();
+                function deployGlooWall() {
+                    if (glooWallCount <= 0) return;
+                    sound.playGlooWall();
+                    let realWall = BABYLON.MeshBuilder.CreateBox("glooWall", { width: 3, height: 2.5, depth: 0.8 }, scene);
+                    realWall.position = previewGlooWall.position.clone();
+                    realWall.rotation.y = previewGlooWall.rotation.y;
 
-            for (let r = 0; r < width; r++) {
-                for (let c = 0; c < width - 2; c++) {
-                    let idx = r * width + c;
-                    let val = board[idx];
-                    if (val && val === board[idx+1] && val === board[idx+2]) {
-                        clearedIndices.add(idx);
-                        clearedIndices.add(idx+1);
-                        clearedIndices.add(idx+2);
+                    let wallMat = new BABYLON.PBRMaterial("glooMat", scene);
+                    wallMat.metallic = 0.1;
+                    wallMat.roughness = 0.2;
+                    wallMat.albedoColor = new BABYLON.Color3(0.0, 0.7, 1.0);
+                    wallMat.emissiveColor = new BABYLON.Color3(0.0, 0.3, 0.6);
+                    realWall.material = wallMat;
+                    shadowGenerator.addShadowCaster(realWall);
+
+                    glooWallCount--;
+                    isPlacingGlooWall = false;
+                    if (previewGlooWall) {
+                        previewGlooWall.dispose();
+                        previewGlooWall = null;
                     }
                 }
-            }
 
-            for (let r = 0; r < width - 2; r++) {
-                for (let c = 0; c < width; c++) {
-                    let idx = r * width + c;
-                    let val = board[idx];
-                    if (val && val === board[idx+width] && val === board[idx+width*2]) {
-                        clearedIndices.add(idx);
-                        clearedIndices.add(idx+width);
-                        clearedIndices.add(idx+width*2);
-                    }
-                }
-            }
+                // --- Babylon GUI Mobile Controls ---
+                const advancedTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
 
-            if (clearedIndices.size > 0) {
-                score += clearedIndices.size * 15;
-                scoreDisplay.innerText = score;
+                // Movement Joystick (Left)
+                let moveJoyBase = new BABYLON.GUI.Ellipse("moveBase");
+                moveJoyBase.width = "120px";
+                moveJoyBase.height = "120px";
+                moveJoyBase.left = "35px";
+                moveJoyBase.bottom = "35px";
+                moveJoyBase.color = "rgba(255, 255, 255, 0.25)";
+                moveJoyBase.thickness = 3;
+                moveJoyBase.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+                moveJoyBase.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
+                advancedTexture.addControl(moveJoyBase);
 
-                clearedIndices.forEach(idx => board[idx] = null);
-                renderBoard();
+                let moveJoyThumb = new BABYLON.GUI.Ellipse("moveThumb");
+                moveJoyThumb.width = "50px";
+                moveJoyThumb.height = "50px";
+                moveJoyThumb.color = "rgba(56, 189, 248, 0.8)";
+                moveJoyThumb.background = "rgba(56, 189, 248, 0.4)";
+                moveJoyBase.addControl(moveJoyThumb);
 
-                setTimeout(() => {
-                    applyGravity();
-                }, 250);
-            } else {
-                isProcessing = false;
-                checkGameProgress();
-            }
-        }
+                let isMoving = false;
+                let moveTouchId = null;
+                let moveVector = new BABYLON.Vector3(0, 0, 0);
 
-        function applyGravity() {
-            for (let c = 0; c < width; c++) {
-                for (let r = width - 1; r >= 0; r--) {
-                    let idx = r * width + c;
-                    if (board[idx] === null) {
-                        let found = false;
-                        for (let aboveR = r - 1; aboveR >= 0; aboveR--) {
-                            let aboveIdx = aboveR * width + c;
-                            if (board[aboveIdx] !== null) {
-                                board[idx] = board[aboveIdx];
-                                board[aboveIdx] = null;
-                                found = true;
-                                break;
+                moveJoyBase.onPointerDownObservable.add((args) => {
+                    isMoving = true;
+                    moveTouchId = args.pointerId;
+                });
+
+                scene.onPointerObservable.add((pointerInfo) => {
+                    if (isMoving && pointerInfo.event.pointerId === moveTouchId) {
+                        if (pointerInfo.type === BABYLON.PointerEventTypes.POINTERUP) {
+                            isMoving = false;
+                            moveJoyThumb.left = 0;
+                            moveJoyThumb.top = 0;
+                            moveVector.set(0, 0, 0);
+                        } else if (pointerInfo.type === BABYLON.PointerEventTypes.POINTERMOVE) {
+                            let rect = moveJoyBase._domElement.getBoundingClientRect();
+                            let centerX = rect.left + rect.width / 2;
+                            let centerY = rect.top + rect.height / 2;
+                            let dx = pointerInfo.event.clientX - centerX;
+                            let dy = pointerInfo.event.clientY - centerY;
+                            let dist = Math.sqrt(dx * dx + dy * dy);
+                            let maxDist = 35;
+
+                            if (dist > maxDist) {
+                                dx = (dx / dist) * maxDist;
+                                dy = (dy / dist) * maxDist;
                             }
-                        }
-                        if (!found) {
-                            board[idx] = emojis[Math.floor(Math.random() * emojis.length)];
+                            moveJoyThumb.left = dx + "px";
+                            moveJoyThumb.top = dy + "px";
+                            moveVector.x = dx / maxDist;
+                            moveVector.z = -dy / maxDist;
                         }
                     }
-                }
-            }
+                });
 
-            renderBoard();
+                // Right Action Buttons Panel
+                // 1. Fire Button
+                let fireButton = BABYLON.GUI.Button.CreateSimpleButton("fireBtn", "FIRE");
+                fireButton.width = "85px";
+                fireButton.height = "85px";
+                fireButton.color = "white";
+                fireButton.background = "rgba(239, 68, 68, 0.8)";
+                fireButton.cornerRadius = 42;
+                fireButton.thickness = 3;
+                fireButton.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_RIGHT;
+                fireButton.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
+                fireButton.left = "-30px";
+                fireButton.bottom = "-30px";
+                advancedTexture.addControl(fireButton);
 
-            setTimeout(() => {
-                if (checkMatches()) {
-                    processMatches();
-                } else {
-                    isProcessing = false;
-                    checkGameProgress();
-                }
-            }, 250);
-        }
+                fireButton.onPointerUpObservable.add(() => {
+                    if (isPlacingGlooWall) {
+                        deployGlooWall();
+                        return;
+                    }
 
-        function checkGameProgress() {
-            if (score >= targetScore) {
-                setTimeout(() => {
-                    modalTitle.innerText = "Level Cleared! 🚀";
-                    modalText.innerText = `Awesome! You reached the score target.`;
-                    modalBtn.innerText = "Next Level";
-                    modalBtn.onclick = nextLevel;
-                    modal.style.display = 'flex';
-                }, 300);
-            } else if (moves <= 0 && !isProcessing) {
-                setTimeout(() => {
-                    modalTitle.innerText = "Out of Moves! 😢";
-                    modalText.innerText = `Score: ${score}. Target was ${targetScore}.`;
-                    modalBtn.innerText = "Try Again";
-                    modalBtn.onclick = restartLevel;
-                    modal.style.display = 'flex';
-                }, 300);
-            }
-        }
+                    let curW = weapons[currentWeaponIndex];
+                    if (curW.ammo > 0) {
+                        curW.ammo--;
+                        document.getElementById("ammo-val").innerText = curW.ammo;
+                        sound.playGunshot(curW.type);
 
-        function nextLevel() {
-            level++;
-            initGame();
-        }
+                        player.scaling.z = 1.12;
+                        setTimeout(() => player.scaling.z = 1, 70);
+                    } else {
+                        sound.playSwitch();
+                        curW.ammo = curW.maxAmmo;
+                        document.getElementById("ammo-val").innerText = curW.ammo;
+                    }
+                });
 
-        function restartLevel() {
-            initGame();
-        }
+                // 2. Weapon Slot Switcher Button
+                let slotButton = BABYLON.GUI.Button.CreateSimpleButton("slotBtn", "SWAP GUN");
+                slotButton.width = "75px";
+                slotButton.height = "45px";
+                slotButton.color = "white";
+                slotButton.background = "rgba(15, 23, 42, 0.85)";
+                slotButton.cornerRadius = 8;
+                slotButton.thickness = 2;
+                slotButton.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_RIGHT;
+                slotButton.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
+                slotButton.left = "-130px";
+                slotButton.bottom = "-45px";
+                advancedTexture.addControl(slotButton);
 
-        initGame();
+                slotButton.onPointerUpObservable.add(() => {
+                    if (isPlacingGlooWall) {
+                        isPlacingGlooWall = false;
+                        if (previewGlooWall) { previewGlooWall.dispose(); previewGlooWall = null; }
+                    }
+                    currentWeaponIndex = (currentWeaponIndex + 1) % weapons.length;
+                    let curW = weapons[currentWeaponIndex];
+                    document.getElementById("weapon-val").innerText = curW.name;
+                    document.getElementById("ammo-val").innerText = curW.ammo;
+                    sound.playSwitch();
+                });
+
+                // 3. Glow Wall (Gloo Wall) Button
+                let glooButton = BABYLON.GUI.Button.CreateSimpleButton("glooBtn", "GLOW WALL");
+                glooButton.width = "75px";
+                glooButton.height = "45px";
+                glooButton.color = "white";
+                glooButton.background = "rgba(2, 132, 199, 0.85)";
+                glooButton.cornerRadius = 8;
+                glooButton.thickness = 2;
+                glooButton.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_RIGHT;
+                glooButton.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
+                slotButton.left = "-130px";
+                glooButton.left = "-130px";
+                glooButton.bottom = "-105px";
+                advancedTexture.addControl(glooButton);
+
+                glooButton.onPointerUpObservable.add(() => {
+                    if (glooWallCount > 0) {
+                        isPlacingGlooWall = !isPlacingGlooWall;
+                        if (isPlacingGlooWall) {
+                            createGlooWallPreview();
+                        } else if (previewGlooWall) {
+                            previewGlooWall.dispose();
+                            previewGlooWall = null;
+                        }
+                    }
+                });
+
+                // Main Render Loop
+                scene.registerBeforeRender(() => {
+                    if (moveVector.length() > 0) {
+                        let speed = 0.11;
+                        let moveDir = new BABYLON.Vector3(moveVector.x, 0, moveVector.z);
+                        player.moveWithCollisions(moveDir.scale(speed));
+                        
+                        let targetAngle = Math.atan2(moveVector.x, moveVector.z);
+                        player.rotation.y = targetAngle;
+
+                        if (isPlacingGlooWall) {
+                            updateGlooWallPreviewPosition();
+                        }
+                    }
+
+                    if (safeZone.scaling.x > 0.35) {
+                        safeZone.scaling.x -= 0.00008;
+                        safeZone.scaling.z -= 0.00008;
+                    }
+                });
+
+                return scene;
+            };
+
+            const scene = createScene();
+            engine.runRenderLoop(() => { scene.render(); });
+            window.addEventListener("resize", () => { engine.resize(); });
+        });
     </script>
 </body>
 </html>
