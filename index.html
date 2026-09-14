@@ -1,534 +1,622 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Red Ball: Genesis - Ultra Edition</title>
-    
-    <!-- PWA Web App Manifest Configuration for Home Screen Install -->
-    <link rel="manifest" href='data:application/manifest+json,{
-        "name": "Red Ball Genesis",
-        "short_name": "RedBall",
-        "start_url": "./index.html",
-        "display": "fullscreen",
-        "background_color": "#090d16",
-        "theme_color": "#090d16",
-        "icons": [
-            {
-                "src": "https://img.icons8.com/color/512/red-circle.png",
-                "sizes": "512x512",
-                "type": "image/png"
-            }
-        ]
-    }'>
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-
-    <!-- Babylon.js & GUI Library -->
-    <script src="https://cdn.babylonjs.com/babylon.js"></script>
-    <script src="https://cdn.babylonjs.com/gui/babylon.gui.min.js"></script>
-    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modern Custom Video Player</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <style>
-        * {
-            box-sizing: border-box;
-            -webkit-touch-callout: none;
-            -webkit-user-select: none;
-            user-select: none;
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a; /* Tailwind slate-900 */
+            color: #f8fafc; /* Tailwind slate-50 */
         }
-        body, html {
-            margin: 0;
-            padding: 0;
+
+        /* Custom Range Slider Styling */
+        input[type=range] {
+            -webkit-appearance: none;
             width: 100%;
-            height: 100%;
-            overflow: hidden;
-            background-color: #090d16;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            touch-action: none;
-        }
-        #renderCanvas {
-            width: 100%;
-            height: 100%;
-            display: block;
-            touch-action: none;
+            background: transparent;
             outline: none;
+            height: 6px;
+            border-radius: 9999px;
+            cursor: pointer;
         }
-        #hud-overlay {
-            position: absolute;
-            top: env(safe-area-inset-top, 10px);
-            left: 12px;
-            right: 12px;
+
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 6px;
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 9999px;
+        }
+
+        input[type=range]::-webkit-slider-thumb {
+            height: 14px;
+            width: 14px;
+            border-radius: 50%;
+            background: #3b82f6; /* Blue-500 */
+            cursor: pointer;
+            -webkit-appearance: none;
+            margin-top: -4px;
+            box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+            transition: transform 0.1s;
+        }
+
+        input[type=range]:hover::-webkit-slider-thumb {
+            transform: scale(1.2);
+        }
+
+        input[type=range]:focus::-webkit-slider-thumb {
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+        }
+
+        /* Firefox Support */
+        input[type=range]::-moz-range-track {
+            width: 100%;
+            height: 6px;
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 9999px;
+        }
+
+        input[type=range]::-moz-range-thumb {
+            height: 14px;
+            width: 14px;
+            border-radius: 50%;
+            background: #3b82f6;
+            cursor: pointer;
+            border: none;
+        }
+
+        /* Custom dynamic progress fill */
+        .range-wrapper {
+            position: relative;
+            width: 100%;
             display: flex;
-            justify-content: space-between;
             align-items: center;
+        }
+
+        .range-fill {
+            position: absolute;
+            height: 6px;
+            background: #3b82f6;
+            border-radius: 9999px;
             pointer-events: none;
-            z-index: 10;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 0%;
         }
-        .hud-panel {
-            background: rgba(15, 23, 42, 0.9);
-            border: 2px solid rgba(244, 63, 94, 0.8);
-            padding: 6px 14px;
-            border-radius: 8px;
-            color: #ffffff;
-            font-size: 11px;
-            font-weight: 900;
-            box-shadow: 0 4px 15px rgba(244, 63, 94, 0.4);
-            backdrop-filter: blur(6px);
-            pointer-events: auto;
+
+        /* Video Controls Transitions */
+        .video-controls {
+            transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+            transform: translateY(10px);
         }
-        .hud-panel span {
-            color: #fb7185;
+        
+        .video-container:hover .video-controls,
+        .video-controls.active {
+            opacity: 1;
+            transform: translateY(0);
         }
-        #install-btn {
-            background: linear-gradient(135deg, #10b981, #059669);
-            color: white;
-            border: none;
-            padding: 6px 12px;
-            border-radius: 8px;
-            font-weight: 900;
-            font-size: 10px;
-            cursor: pointer;
-            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
-            pointer-events: auto;
+
+        .video-container.hide-cursor {
+            cursor: none;
         }
-        #main-menu {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: radial-gradient(circle, #1e1b4b 0%, #090d16 100%);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 100;
-            color: white;
-            text-align: center;
-            padding: 20px;
-        }
-        .menu-card {
-            background: rgba(15, 23, 42, 0.85);
-            border: 2px solid #f43f5e;
-            padding: 30px;
-            border-radius: 16px;
-            box-shadow: 0 0 40px rgba(244, 63, 94, 0.5);
-            max-width: 380px;
-            width: 100%;
-        }
-        .menu-btn {
-            background: linear-gradient(135deg, #f43f5e, #e11d48);
-            color: white;
-            border: none;
-            width: 100%;
-            padding: 14px;
-            margin: 10px 0;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 900;
-            cursor: pointer;
-            box-shadow: 0 4px 15px rgba(244, 63, 94, 0.5);
-        }
-        .menu-btn:active {
-            transform: scale(0.96);
+
+        /* Playback speed menu animation */
+        .speed-menu {
+            transition: all 0.2s ease;
+            transform-origin: bottom right;
         }
     </style>
 </head>
-<body>
+<body class="min-h-screen flex flex-col items-center justify-center p-4 sm:p-8">
 
-    <!-- Interactive Main Menu Overlay -->
-    <div id="main-menu">
-        <div class="menu-card">
-            <h1 style="color: #fb7185; margin-bottom: 5px; font-size: 28px;">🔴 RED BALL</h1>
-            <h3 style="letter-spacing: 2px; color: #38bdf8; margin-top: 0;">GENESIS ULTRA</h3>
-            <p style="font-size: 13px; color: #94a3b8; margin-bottom: 25px;">Roll, jump, and collect all stars to conquer 5 hardcore levels!</p>
-            <button class="menu-btn" onclick="startGame()">PLAY GAME 🚀</button>
-            <button class="menu-btn" style="background: linear-gradient(135deg, #0284c7, #0369a1);" onclick="installApp()">📲 ADD TO HOME SCREEN</button>
+    <div class="w-full max-w-5xl mx-auto space-y-6">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-emerald-400 mb-2">
+                <i class="ph-fill ph-play-circle align-middle mr-2"></i>Nexus Player
+            </h1>
+            <p class="text-slate-400 text-sm">Play local files or stream from a URL with advanced custom controls.</p>
+        </header>
+
+        <div class="bg-slate-800 p-4 sm:p-6 rounded-2xl shadow-xl border border-slate-700/50 flex flex-col sm:flex-row gap-4 items-center justify-between">
+            <!-- URL Input -->
+            <div class="flex w-full sm:w-2/3 space-x-2">
+                <input type="url" id="video-url" placeholder="Enter video URL (e.g., .mp4, .webm)" 
+                    class="flex-1 bg-slate-900 border border-slate-600 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all placeholder-slate-500">
+                <button id="load-url-btn" class="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2.5 rounded-lg font-medium text-sm transition-colors flex items-center shadow-lg shadow-blue-500/20 whitespace-nowrap">
+                    <i class="ph ph-cloud-arrow-down mr-2 text-lg"></i> Load URL
+                </button>
+            </div>
+            
+            <div class="hidden sm:block text-slate-500 font-semibold text-sm">OR</div>
+            
+            <!-- Local File Input -->
+            <div class="w-full sm:w-auto relative">
+                <input type="file" id="file-input" accept="video/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+                <button class="w-full bg-slate-700 hover:bg-slate-600 text-white px-5 py-2.5 rounded-lg font-medium text-sm transition-colors flex items-center justify-center border border-slate-500/30 whitespace-nowrap">
+                    <i class="ph ph-folder-open mr-2 text-lg"></i> Browse File
+                </button>
+            </div>
+        </div>
+
+        <div id="video-container" class="video-container relative w-full aspect-video bg-black rounded-2xl shadow-2xl overflow-hidden ring-1 ring-white/10 group">
+            
+            <!-- Loading Spinner (Hidden by default) -->
+            <div id="loading-spinner" class="absolute inset-0 flex items-center justify-center bg-black/50 z-20 hidden">
+                <i class="ph ph-spinner-gap animate-spin text-5xl text-blue-500"></i>
+            </div>
+
+            <!-- Error Message (Hidden by default) -->
+            <div id="error-message" class="absolute inset-0 flex items-center justify-center bg-black/80 z-20 hidden flex-col">
+                <i class="ph ph-warning-circle text-5xl text-red-500 mb-2"></i>
+                <p class="text-white text-center px-4" id="error-text">Failed to load video.</p>
+            </div>
+
+            <!-- Play Overlay (Click to play initially) -->
+            <button id="center-play-btn" class="absolute inset-0 w-full h-full flex items-center justify-center z-10 bg-black/20 hover:bg-black/40 transition-colors group/play">
+                <div class="w-20 h-20 bg-blue-600/90 rounded-full flex items-center justify-center backdrop-blur-sm shadow-xl transform group-hover/play:scale-110 transition-transform duration-300">
+                    <i class="ph-fill ph-play text-4xl text-white ml-2"></i>
+                </div>
+            </button>
+
+            <!-- Video Element -->
+            <video id="video-player" class="w-full h-full object-contain cursor-pointer" playsinline>
+                <!-- Initial dummy source just to show player layout, gets replaced immediately -->
+                <source src="" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+
+            <div id="video-controls" class="video-controls absolute bottom-0 left-0 right-0 z-30 bg-gradient-to-t from-black/90 via-black/60 to-transparent pt-12 pb-4 px-4 opacity-0 flex flex-col gap-2">
+                
+                <!-- Progress Bar -->
+                <div class="range-wrapper group/progress w-full h-4 flex items-center cursor-pointer">
+                    <div class="range-fill group-hover/progress:bg-blue-400 transition-colors" id="progress-fill"></div>
+                    <input type="range" id="progress-bar" min="0" max="100" value="0" step="0.1" class="absolute w-full h-full opacity-0 z-10 cursor-pointer">
+                    <!-- Buffer Bar -->
+                    <div class="absolute h-[6px] bg-white/20 rounded-full pointer-events-none w-0" id="buffer-bar" style="top: 50%; transform: translateY(-50%);"></div>
+                </div>
+
+                <!-- Control Buttons -->
+                <div class="flex items-center justify-between text-white mt-1">
+                    
+                    <div class="flex items-center gap-2 sm:gap-4">
+                        <!-- Play/Pause -->
+                        <button id="play-pause-btn" class="hover:text-blue-400 transition-colors p-1" title="Play (Space)">
+                            <i class="ph-fill ph-play text-2xl" id="play-icon"></i>
+                        </button>
+                        
+                        <!-- Volume Control -->
+                        <div class="flex items-center gap-2 group/volume relative">
+                            <button id="mute-btn" class="hover:text-blue-400 transition-colors p-1" title="Mute (M)">
+                                <i class="ph-fill ph-speaker-high text-2xl" id="volume-icon"></i>
+                            </button>
+                            <div class="w-0 overflow-hidden group-hover/volume:w-24 transition-all duration-300 ease-out flex items-center opacity-0 group-hover/volume:opacity-100">
+                                <div class="range-wrapper w-[80px]">
+                                    <div class="range-fill bg-white" id="volume-fill" style="width: 100%;"></div>
+                                    <input type="range" id="volume-slider" min="0" max="1" step="0.05" value="1">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Time Display -->
+                        <div class="text-xs sm:text-sm font-medium tracking-wide text-slate-200 ml-2">
+                            <span id="current-time">00:00</span> <span class="text-slate-400 mx-1">/</span> <span id="duration">00:00</span>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-2 sm:gap-4 relative">
+                        <!-- Playback Speed -->
+                        <div class="relative">
+                            <button id="speed-btn" class="hover:bg-white/20 px-2 py-1 rounded transition-colors text-sm font-semibold flex items-center gap-1" title="Playback Speed">
+                                <span id="speed-display">1x</span>
+                            </button>
+                            <!-- Speed Menu -->
+                            <div id="speed-menu" class="speed-menu absolute bottom-full right-0 mb-2 bg-slate-800/95 backdrop-blur border border-slate-700 rounded-lg shadow-xl overflow-hidden flex flex-col scale-0 opacity-0 min-w-[100px] z-40">
+                                <button class="speed-option hover:bg-blue-600 px-4 py-2 text-left text-sm transition-colors" data-speed="0.25">0.25x</button>
+                                <button class="speed-option hover:bg-blue-600 px-4 py-2 text-left text-sm transition-colors" data-speed="0.5">0.5x</button>
+                                <button class="speed-option hover:bg-blue-600 px-4 py-2 text-left text-sm transition-colors" data-speed="0.75">0.75x</button>
+                                <button class="speed-option hover:bg-blue-600 px-4 py-2 text-left text-sm transition-colors bg-blue-600/30 text-blue-300 font-bold" data-speed="1">1x (Normal)</button>
+                                <button class="speed-option hover:bg-blue-600 px-4 py-2 text-left text-sm transition-colors" data-speed="1.25">1.25x</button>
+                                <button class="speed-option hover:bg-blue-600 px-4 py-2 text-left text-sm transition-colors" data-speed="1.5">1.5x</button>
+                                <button class="speed-option hover:bg-blue-600 px-4 py-2 text-left text-sm transition-colors" data-speed="2">2x</button>
+                            </div>
+                        </div>
+
+                        <!-- Picture in Picture -->
+                        <button id="pip-btn" class="hover:text-blue-400 transition-colors p-1 hidden sm:block" title="Picture-in-Picture">
+                            <i class="ph-bold ph-picture-in-picture text-xl"></i>
+                        </button>
+
+                        <!-- Fullscreen -->
+                        <button id="fullscreen-btn" class="hover:text-blue-400 transition-colors p-1" title="Fullscreen (F)">
+                            <i class="ph-bold ph-corners-out text-xl" id="fullscreen-icon"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Keyboard shortcuts hint -->
+        <div class="text-center text-xs text-slate-500 mt-4">
+            <p>Shortcuts: <kbd class="bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700">Space</kbd> Play/Pause · <kbd class="bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700">F</kbd> Fullscreen · <kbd class="bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700">M</kbd> Mute · <kbd class="bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700">←</kbd> <kbd class="bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700">→</kbd> Seek 5s</p>
         </div>
     </div>
 
-    <div id="hud-overlay" style="display: none;">
-        <div class="hud-panel">LVL: <span id="level-val">1</span>/5 | LIVES: <span id="lives-val">3</span></div>
-        <div class="hud-panel">STARS: <span id="stars-val">0</span>/<span id="max-stars-val">3</span></div>
-        <button id="install-btn" onclick="installApp()">📥 HOME</button>
-    </div>
-
-    <canvas id="renderCanvas"></canvas>
-
     <script>
-        // PWA Installation Hook
-        let deferredInstallPrompt = null;
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredInstallPrompt = e;
-        });
+        document.addEventListener('DOMContentLoaded', () => {
+            // Elements
+            const playerContainer = document.getElementById('video-container');
+            const video = document.getElementById('video-player');
+            const controls = document.getElementById('video-controls');
+            const centerPlayBtn = document.getElementById('center-play-btn');
+            
+            // Inputs
+            const urlInput = document.getElementById('video-url');
+            const loadUrlBtn = document.getElementById('load-url-btn');
+            const fileInput = document.getElementById('file-input');
+            
+            // Status Overlays
+            const loadingSpinner = document.getElementById('loading-spinner');
+            const errorMessage = document.getElementById('error-message');
+            const errorText = document.getElementById('error-text');
 
-        function installApp() {
-            if (deferredInstallPrompt) {
-                deferredInstallPrompt.prompt();
-                deferredInstallPrompt.userChoice.then((choiceResult) => {
-                    deferredInstallPrompt = null;
+            // Controls
+            const playPauseBtn = document.getElementById('play-pause-btn');
+            const playIcon = document.getElementById('play-icon');
+            const progressBar = document.getElementById('progress-bar');
+            const progressFill = document.getElementById('progress-fill');
+            const bufferBar = document.getElementById('buffer-bar');
+            
+            const volumeSlider = document.getElementById('volume-slider');
+            const volumeFill = document.getElementById('volume-fill');
+            const muteBtn = document.getElementById('mute-btn');
+            const volumeIcon = document.getElementById('volume-icon');
+            
+            const currentTimeEl = document.getElementById('current-time');
+            const durationEl = document.getElementById('duration');
+            
+            const speedBtn = document.getElementById('speed-btn');
+            const speedMenu = document.getElementById('speed-menu');
+            const speedOptions = document.querySelectorAll('.speed-option');
+            const speedDisplay = document.getElementById('speed-display');
+            
+            const pipBtn = document.getElementById('pip-btn');
+            const fullscreenBtn = document.getElementById('fullscreen-btn');
+            const fullscreenIcon = document.getElementById('fullscreen-icon');
+
+            let controlsTimeout;
+            let currentBlobUrl = null;
+
+            // Default Video to showcase the player instantly (Optional, using a standard sample)
+            const defaultVideoUrl = 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4';
+            loadVideo(defaultVideoUrl);
+
+            function loadVideo(source) {
+                hideError();
+                showLoading();
+                video.src = source;
+                video.load();
+                centerPlayBtn.style.display = 'flex';
+                resetPlayerState();
+            }
+
+            // URL Loading
+            loadUrlBtn.addEventListener('click', () => {
+                const url = urlInput.value.trim();
+                if (url) {
+                    loadVideo(url);
+                }
+            });
+            urlInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') loadUrlBtn.click();
+            });
+
+            // Local File Loading
+            fileInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    if (currentBlobUrl) {
+                        URL.revokeObjectURL(currentBlobUrl); // Clean up memory
+                    }
+                    currentBlobUrl = URL.createObjectURL(file);
+                    loadVideo(currentBlobUrl);
+                    urlInput.value = ''; // Clear URL input to avoid confusion
+                }
+            });
+
+            // Video Event Listeners for Loading/Errors
+            video.addEventListener('canplay', () => {
+                hideLoading();
+            });
+            
+            video.addEventListener('waiting', showLoading);
+            video.addEventListener('playing', hideLoading);
+
+            video.addEventListener('error', () => {
+                hideLoading();
+                showError("Error loading video. The URL might be invalid, broken, or restricted.");
+                centerPlayBtn.style.display = 'none';
+            });
+
+            function togglePlay() {
+                if (video.readyState === 0) return; // Not loaded
+                
+                if (video.paused || video.ended) {
+                    video.play();
+                } else {
+                    video.pause();
+                }
+            }
+
+            function updatePlayIcon() {
+                if (video.paused) {
+                    playIcon.className = 'ph-fill ph-play text-2xl';
+                    centerPlayBtn.style.display = 'flex'; // Show center button when paused
+                    controls.classList.add('active'); // Keep controls visible when paused
+                } else {
+                    playIcon.className = 'ph-fill ph-pause text-2xl';
+                    centerPlayBtn.style.display = 'none';
+                    controls.classList.remove('active');
+                    resetIdleTimer();
+                }
+            }
+
+            playPauseBtn.addEventListener('click', togglePlay);
+            centerPlayBtn.addEventListener('click', togglePlay);
+            video.addEventListener('click', togglePlay);
+            
+            video.addEventListener('play', updatePlayIcon);
+            video.addEventListener('pause', updatePlayIcon);
+
+            // Progress Bar
+            video.addEventListener('timeupdate', () => {
+                if(!video.duration) return;
+                const progressPercentage = (video.currentTime / video.duration) * 100;
+                progressBar.value = progressPercentage;
+                progressFill.style.width = `${progressPercentage}%`;
+                currentTimeEl.textContent = formatTime(video.currentTime);
+            });
+
+            // Handle Seeking
+            let isScrubbing = false;
+
+            progressBar.addEventListener('input', (e) => {
+                isScrubbing = true;
+                const seekTime = (e.target.value / 100) * video.duration;
+                progressFill.style.width = `${e.target.value}%`;
+                currentTimeEl.textContent = formatTime(seekTime);
+            });
+
+            progressBar.addEventListener('change', (e) => {
+                const seekTime = (e.target.value / 100) * video.duration;
+                video.currentTime = seekTime;
+                isScrubbing = false;
+            });
+
+            // Buffer Bar
+            video.addEventListener('progress', () => {
+                if (video.duration > 0 && video.buffered.length > 0) {
+                    const bufferedEnd = video.buffered.end(video.buffered.length - 1);
+                    const bufferPercentage = (bufferedEnd / video.duration) * 100;
+                    bufferBar.style.width = `${bufferPercentage}%`;
+                }
+            });
+
+            video.addEventListener('loadedmetadata', () => {
+                durationEl.textContent = formatTime(video.duration);
+            });
+
+            function updateVolumeIcon(volume) {
+                if (volume === 0 || video.muted) {
+                    volumeIcon.className = 'ph-fill ph-speaker-none text-2xl';
+                } else if (volume < 0.5) {
+                    volumeIcon.className = 'ph-fill ph-speaker-low text-2xl';
+                } else {
+                    volumeIcon.className = 'ph-fill ph-speaker-high text-2xl';
+                }
+            }
+
+            volumeSlider.addEventListener('input', (e) => {
+                const value = e.target.value;
+                video.volume = value;
+                video.muted = value === '0';
+                volumeFill.style.width = `${value * 100}%`;
+                updateVolumeIcon(value);
+            });
+
+            muteBtn.addEventListener('click', () => {
+                if (video.muted || video.volume === 0) {
+                    video.muted = false;
+                    video.volume = video.volume === 0 ? 1 : video.volume;
+                    volumeSlider.value = video.volume;
+                    volumeFill.style.width = `${video.volume * 100}%`;
+                } else {
+                    video.muted = true;
+                    volumeSlider.value = 0;
+                    volumeFill.style.width = '0%';
+                }
+                updateVolumeIcon(video.volume);
+            });
+
+            // Initialize Volume UI
+            video.volume = 1;
+            volumeFill.style.width = '100%';
+
+            function formatTime(seconds) {
+                if(isNaN(seconds)) return "00:00";
+                const h = Math.floor(seconds / 3600);
+                const m = Math.floor((seconds % 3600) / 60);
+                const s = Math.floor(seconds % 60);
+                
+                if (h > 0) {
+                    return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+                }
+                return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+            }
+
+            // Playback Speed
+            speedBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                speedMenu.classList.toggle('scale-0');
+                speedMenu.classList.toggle('opacity-0');
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!speedBtn.contains(e.target) && !speedMenu.contains(e.target)) {
+                    speedMenu.classList.add('scale-0');
+                    speedMenu.classList.add('opacity-0');
+                }
+            });
+
+            speedOptions.forEach(option => {
+                option.addEventListener('click', () => {
+                    const speed = option.dataset.speed;
+                    video.playbackRate = speed;
+                    
+                    // Update UI
+                    speedOptions.forEach(opt => {
+                        opt.classList.remove('bg-blue-600/30', 'text-blue-300', 'font-bold');
+                    });
+                    option.classList.add('bg-blue-600/30', 'text-blue-300', 'font-bold');
+                    
+                    speedDisplay.textContent = speed + 'x';
+                    speedMenu.classList.add('scale-0', 'opacity-0');
+                });
+            });
+
+            // Picture-in-Picture
+            if ('pictureInPictureEnabled' in document) {
+                pipBtn.addEventListener('click', async () => {
+                    try {
+                        if (document.pictureInPictureElement) {
+                            await document.exitPictureInPicture();
+                        } else {
+                            await video.requestPictureInPicture();
+                        }
+                    } catch (error) {
+                        console.error('PiP Error:', error);
+                    }
                 });
             } else {
-                alert("To add to home screen:\n\n📱 Android (Chrome): Tap browser menu (3 dots) ➔ 'Install app' or 'Add to Home Screen'.\n\n🍎 iPhone (Safari): Tap Share button ➔ 'Add to Home Screen'.");
+                pipBtn.style.display = 'none'; // Hide if not supported
             }
-        }
 
-        function startGame() {
-            document.getElementById("main-menu").style.display = "none";
-            document.getElementById("hud-overlay").style.display = "flex";
-            initGame();
-        }
-
-        // --- High-End Web Audio Synthesizer ---
-        class SoundSystem {
-            constructor() {
-                const AudioContext = window.AudioContext || window.webkitAudioContext;
-                this.ctx = new AudioContext();
-            }
-            playJump() {
-                if (this.ctx.state === 'suspended') this.ctx.resume();
-                let osc = this.ctx.createOscillator();
-                let gain = this.ctx.createGain();
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(200, this.ctx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(600, this.ctx.currentTime + 0.15);
-                gain.gain.setValueAtTime(0.35, this.ctx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.15);
-                osc.connect(gain); gain.connect(this.ctx.destination);
-                osc.start(); osc.stop(this.ctx.currentTime + 0.15);
-            }
-            playCollect() {
-                if (this.ctx.state === 'suspended') this.ctx.resume();
-                let osc = this.ctx.createOscillator();
-                let gain = this.ctx.createGain();
-                osc.type = 'triangle';
-                osc.frequency.setValueAtTime(600, this.ctx.currentTime);
-                osc.frequency.setValueAtTime(1000, this.ctx.currentTime + 0.1);
-                gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.2);
-                osc.connect(gain); gain.connect(this.ctx.destination);
-                osc.start(); osc.stop(this.ctx.currentTime + 0.2);
-            }
-            playHurt() {
-                if (this.ctx.state === 'suspended') this.ctx.resume();
-                let osc = this.ctx.createOscillator();
-                let gain = this.ctx.createGain();
-                osc.type = 'sawtooth';
-                osc.frequency.setValueAtTime(150, this.ctx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(30, this.ctx.currentTime + 0.3);
-                gain.gain.setValueAtTime(0.45, this.ctx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.3);
-                osc.connect(gain); gain.connect(this.ctx.destination);
-                osc.start(); osc.stop(this.ctx.currentTime + 0.3);
-            }
-            playWin() {
-                if (this.ctx.state === 'suspended') this.ctx.resume();
-                let osc = this.ctx.createOscillator();
-                let gain = this.ctx.createGain();
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(400, this.ctx.currentTime);
-                osc.frequency.setValueAtTime(600, this.ctx.currentTime + 0.12);
-                osc.frequency.setValueAtTime(900, this.ctx.currentTime + 0.24);
-                gain.gain.setValueAtTime(0.4, this.ctx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.45);
-                osc.connect(gain); gain.connect(this.ctx.destination);
-                osc.start(); osc.stop(this.ctx.currentTime + 0.45);
-            }
-        }
-        const sound = new SoundSystem();
-
-        // --- Main Game Engine ---
-        function initGame() {
-            const canvas = document.getElementById("renderCanvas");
-            const engine = new BABYLON.Engine(canvas, true, { preserveDrawingBuffer: true, stencil: true });
-
-            let currentLevel = 1;
-            let lives = 3;
-            let starsCollected = 0;
-            let totalLevelStars = 3;
-            const maxLevels = 5;
-
-            const createScene = function () {
-                const scene = new BABYLON.Scene(engine);
-                scene.clearColor = new BABYLON.Color3(0.05, 0.08, 0.18);
-
-                const camera = new BABYLON.ArcRotateCamera("Camera", -Math.PI / 2, Math.PI / 2.3, 16, BABYLON.Vector3.Zero(), scene);
-                camera.attachControl(canvas, false);
-
-                const light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 1, 0), scene);
-                light.intensity = 1.2;
-
-                const dirLight = new BABYLON.DirectionalLight("dirLight", new BABYLON.Vector2(-1, -2), scene);
-                dirLight.position = new BABYLON.Vector3(15, 30, -15);
-                dirLight.intensity = 1.2;
-
-                let platforms = [];
-                let hazards = [];
-                let stars = [];
-                let goalGate = null;
-                let dynamicElements = [];
-
-                function buildLevel(lvl) {
-                    platforms.forEach(p => p.mesh.dispose());
-                    hazards.forEach(h => h.dispose());
-                    stars.forEach(s => s.dispose());
-                    if (goalGate) goalGate.dispose();
-                    platforms = []; hazards = []; stars = []; dynamicElements = [];
-                    starsCollected = 0;
-
-                    let stageLength = 35 + (lvl * 10);
-                    totalLevelStars = 2 + lvl;
-                    document.getElementById("max-stars-val").innerText = totalLevelStars;
-                    document.getElementById("stars-val").innerText = starsCollected;
-                    document.getElementById("level-val").innerText = lvl;
-
-                    let curX = 0;
-                    while (curX < stageLength) {
-                        let platWidth = 4 + Math.random() * 3.5;
-                        let ground = BABYLON.MeshBuilder.CreateBox("g", { width: platWidth, height: 1.2, depth: 4 }, scene);
-                        let pMinX = curX;
-                        let pMaxX = curX + platWidth;
-                        let pY = -1;
-                        ground.position = new BABYLON.Vector3((pMinX + pMaxX) / 2, pY, 0);
-
-                        let mat = new BABYLON.StandardMaterial("gMat", scene);
-                        mat.diffuseColor = new BABYLON.Color3(0.12, 0.22, 0.4);
-                        mat.specularColor = new BABYLON.Color3(0.2, 0.2, 0.2);
-                        ground.material = mat;
-
-                        platforms.push({ mesh: ground, minX: pMinX, maxX: pMaxX, y: pY + 0.6 });
-
-                        if (lvl >= 2 && curX > 3 && Math.random() > 0.35) {
-                            let spike = BABYLON.MeshBuilder.CreateCylinder("spike", { diameterTop: 0, diameterBottom: 0.8, height: 1.0, tessellation: 4 }, scene);
-                            spike.position = new BABYLON.Vector3((pMinX + pMaxX) / 2, -0.1, 0);
-                            let sm = new BABYLON.StandardMaterial("sMat", scene); sm.diffuseColor = new BABYLON.Color3(0.95, 0.2, 0.2);
-                            spike.material = sm;
-                            hazards.push(spike);
-                        }
-
-                        curX += platWidth + (1.5 + lvl * 0.5);
+            // Fullscreen
+            function toggleFullscreen() {
+                if (!document.fullscreenElement) {
+                    if (playerContainer.requestFullscreen) {
+                        playerContainer.requestFullscreen();
+                    } else if (playerContainer.webkitRequestFullscreen) { /* Safari */
+                        playerContainer.webkitRequestFullscreen();
+                    } else if (playerContainer.msRequestFullscreen) { /* IE11 */
+                        playerContainer.msRequestFullscreen();
                     }
-
-                    if (lvl >= 2) {
-                        let blade = BABYLON.MeshBuilder.CreateDisc("blade", { radius: 1.1, tessellation: 16 }, scene);
-                        blade.position = new BABYLON.Vector3(12, 1.8, 0);
-                        let bm = new BABYLON.StandardMaterial("bMat", scene); bm.diffuseColor = new BABYLON.Color3(0.85, 0.85, 0.85);
-                        blade.material = bm;
-                        hazards.push(blade);
-                        dynamicElements.push({ mesh: blade, type: "saw", originX: 12, range: 3.8, speed: 0.045 });
+                } else {
+                    if (document.exitFullscreen) {
+                        document.exitFullscreen();
+                    } else if (document.webkitExitFullscreen) { /* Safari */
+                        document.webkitExitFullscreen();
+                    } else if (document.msExitFullscreen) { /* IE11 */
+                        document.msExitFullscreen();
                     }
-
-                    if (lvl >= 3) {
-                        let laser = BABYLON.MeshBuilder.CreateBox("laser", { width: 4.5, height: 0.22, depth: 0.22 }, scene);
-                        laser.position = new BABYLON.Vector3(22, 2.2, 0);
-                        let lm = new BABYLON.StandardMaterial("lMat", scene); lm.emissiveColor = new BABYLON.Color3(1, 0.1, 0.1);
-                        laser.material = lm;
-                        hazards.push(laser);
-                        dynamicElements.push({ mesh: laser, type: "rotate", speed: 0.055 });
-                    }
-
-                    if (lvl >= 4) {
-                        let crusher = BABYLON.MeshBuilder.CreateBox("crusher", { width: 1.3, height: 4.5, depth: 3 }, scene);
-                        crusher.position = new BABYLON.Vector3(32, 1, 0);
-                        let cm = new BABYLON.StandardMaterial("cMat", scene); cm.diffuseColor = new BABYLON.Color3(0.6, 0.6, 0.6);
-                        crusher.material = cm;
-                        hazards.push(crusher);
-                        dynamicElements.push({ mesh: crusher, type: "crush", originX: 32, range: 2.8, speed: 0.05 });
-                    }
-
-                    for (let s = 0; s < totalLevelStars; s++) {
-                        let star = BABYLON.MeshBuilder.CreateSphere("star" + s, { diameter: 0.85 }, scene);
-                        let sX = 6 + (s * (stageLength / (totalLevelStars + 1)));
-                        star.position = new BABYLON.Vector3(sX, 2.2 + (s % 2) * 1.5, 0);
-                        let sm = new BABYLON.StandardMaterial("starMat", scene); sm.emissiveColor = new BABYLON.Color3(1, 0.85, 0);
-                        star.material = sm;
-                        stars.push(star);
-                    }
-
-                    goalGate = BABYLON.MeshBuilder.CreateBox("gate", { width: 1, height: 4.2, depth: 0.8 }, scene);
-                    goalGate.position = new BABYLON.Vector3(stageLength - 2, 1.6, 0);
-                    let gm = new BABYLON.StandardMaterial("gMat", scene); gm.emissiveColor = new BABYLON.Color3(0.1, 0.95, 0.3);
-                    goalGate.material = gm;
                 }
+            }
 
-                // --- Juicy Red Ball Character ---
-                const ball = BABYLON.MeshBuilder.CreateSphere("redBall", { diameter: 1.0 }, scene);
-                ball.position = new BABYLON.Vector3(1, 3, 0);
-                const ballMat = new BABYLON.StandardMaterial("bMat", scene);
-                ballMat.diffuseColor = new BABYLON.Color3(0.95, 0.15, 0.2);
-                ballMat.specularColor = new BABYLON.Color3(0.6, 0.6, 0.6);
-                ball.material = ballMat;
+            fullscreenBtn.addEventListener('click', toggleFullscreen);
+            video.addEventListener('dblclick', toggleFullscreen);
 
-                // Eyes
-                let eyeL = BABYLON.MeshBuilder.CreateBox("eL", { width: 0.2, height: 0.26, depth: 0.15 }, scene);
-                eyeL.position = new BABYLON.Vector3(-0.2, 0.2, 0.45); eyeL.parent = ball;
-                let eyeR = BABYLON.MeshBuilder.CreateBox("eR", { width: 0.2, height: 0.26, depth: 0.15 }, scene);
-                eyeR.position = new BABYLON.Vector3(0.2, 0.2, 0.45); eyeR.parent = ball;
-                let em = new BABYLON.StandardMaterial("em", scene); em.diffuseColor = new BABYLON.Color3(0, 0, 0);
-                eyeL.material = em; eyeR.material = em;
-
-                buildLevel(currentLevel);
-
-                let moveDir = 0;
-                let velocityY = 0;
-                let velocityX = 0;
-                let isGrounded = false;
-
-                // --- Touch GUI Layout ---
-                const advancedTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
-
-                let btnLeft = BABYLON.GUI.Button.CreateSimpleButton("l", "◀");
-                btnLeft.width = "75px"; btnLeft.height = "75px"; btnLeft.color = "white"; btnLeft.background = "rgba(244, 63, 94, 0.75)";
-                btnLeft.cornerRadius = 37; btnLeft.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
-                btnLeft.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM; btnLeft.left = "30px"; btnLeft.bottom = "30px";
-                advancedTexture.addControl(btnLeft);
-
-                let btnRight = BABYLON.GUI.Button.CreateSimpleButton("r", "▶");
-                btnRight.width = "75px"; btnRight.height = "75px"; btnRight.color = "white"; btnRight.background = "rgba(244, 63, 94, 0.75)";
-                btnRight.cornerRadius = 37; btnRight.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
-                btnRight.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM; btnRight.left = "125px"; btnRight.bottom = "30px";
-                advancedTexture.addControl(btnRight);
-
-                let btnJump = BABYLON.GUI.Button.CreateSimpleButton("j", "JUMP");
-                btnJump.width = "90px"; btnJump.height = "90px"; btnJump.color = "white"; btnJump.background = "rgba(234, 179, 8, 0.9)";
-                btnJump.cornerRadius = 45; btnJump.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_RIGHT;
-                btnJump.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM; btnJump.right = "30px"; btnJump.bottom = "30px";
-                advancedTexture.addControl(btnJump);
-
-                btnLeft.onPointerDownObservable.add(() => { moveDir = -1; });
-                btnLeft.onPointerUpObservable.add(() => { if (moveDir === -1) moveDir = 0; });
-                btnRight.onPointerDownObservable.add(() => { moveDir = 1; });
-                btnRight.onPointerUpObservable.add(() => { if (moveDir === 1) moveDir = 0; });
-
-                btnJump.onPointerUpObservable.add(() => {
-                    if (isGrounded) {
-                        velocityY = 0.26;
-                        isGrounded = false;
-                        sound.playJump();
-                        // Squash & stretch juice
-                        ball.scaling = new BABYLON.Vector3(0.8, 1.3, 0.8);
-                    }
-                });
-
-                // Keyboard support
-                window.addEventListener("keydown", (e) => {
-                    if (e.key === "ArrowLeft" || e.key === "a") moveDir = -1;
-                    if (e.key === "ArrowRight" || e.key === "d") moveDir = 1;
-                    if ((e.key === " " || e.key === "ArrowUp") && isGrounded) {
-                        velocityY = 0.26; isGrounded = false; sound.playJump();
-                        ball.scaling = new BABYLON.Vector3(0.8, 1.3, 0.8);
-                    }
-                });
-                window.addEventListener("keyup", (e) => {
-                    if ((e.key === "ArrowLeft" || e.key === "a") && moveDir === -1) moveDir = 0;
-                    if ((e.key === "ArrowRight" || e.key === "d") && moveDir === 1) moveDir = 0;
-                });
-
-                // --- Game Loop ---
-                scene.registerBeforeRender(() => {
-                    // Smooth return to normal scale after squash/stretch
-                    ball.scaling = BABYLON.Vector3.Lerp(ball.scaling, new BABYLON.Vector3(1, 1, 1), 0.15);
-
-                    if (moveDir !== 0) {
-                        velocityX += moveDir * 0.016;
-                        velocityX = Math.max(-0.16, Math.min(0.16, velocityX));
-                        ball.rotation.z -= velocityX * 1.8;
-                    } else {
-                        velocityX *= 0.82;
-                    }
-                    ball.position.x += velocityX;
-
-                    velocityY -= 0.013;
-                    ball.position.y += velocityY;
-
-                    let time = Date.now() * 0.003;
-                    dynamicElements.forEach(item => {
-                        if (item.type === "saw") {
-                            item.mesh.position.x = item.originX + Math.sin(time * item.speed * 40) * item.range;
-                            item.mesh.rotation.z += 0.12;
-                        } else if (item.type === "rotate") {
-                            item.mesh.rotation.z += item.speed;
-                        } else if (item.type === "crush") {
-                            item.mesh.position.x = item.originX + Math.cos(time * item.speed * 30) * item.range;
-                        }
-                    });
-
-                    let wasGrounded = false;
-                    platforms.forEach(p => {
-                        if (ball.position.x >= p.minX - 0.2 && ball.position.x <= p.maxX + 0.2) {
-                            if (ball.position.y <= p.y + 0.5 && ball.position.y >= p.y - 0.3 && velocityY <= 0) {
-                                ball.position.y = p.y;
-                                if (!isGrounded && velocityY < -0.1) {
-                                    // Land squeeze juice
-                                    ball.scaling = new BABYLON.Vector3(1.25, 0.75, 1.25);
-                                }
-                                velocityY = 0;
-                                wasGrounded = true;
-                            }
-                        }
-                    });
-                    isGrounded = wasGrounded;
-
-                    hazards.forEach(h => {
-                        if (BABYLON.Vector3.Distance(ball.position, h.position) < 1.0) {
-                            respawnPlayer();
-                        }
-                    });
-
-                    if (ball.position.y < -5) {
-                        respawnPlayer();
-                    }
-
-                    stars.forEach((star, idx) => {
-                        if (star && BABYLON.Vector3.Distance(ball.position, star.position) < 1.15) {
-                            star.dispose();
-                            stars[idx] = null;
-                            starsCollected++;
-                            document.getElementById("stars-val").innerText = starsCollected;
-                            sound.playCollect();
-                        }
-                    });
-
-                    if (goalGate && BABYLON.Vector3.Distance(ball.position, goalGate.position) < 1.3) {
-                        if (starsCollected >= totalLevelStars) {
-                            sound.playWin();
-                            currentLevel++;
-                            if (currentLevel > maxLevels) {
-                                alert("🏆 LEGENDARY! You conquered all Genesis levels!");
-                                currentLevel = 1; lives = 3;
-                            } else {
-                                alert("🔥 Level Cleared! Advancing to Level " + currentLevel);
-                            }
-                            document.getElementById("lives-val").innerText = lives;
-                            buildLevel(currentLevel);
-                            ball.position = new BABYLON.Vector3(1, 3, 0);
-                        } else {
-                            ball.position.x -= 0.4; // Locked until all stars collected
-                        }
-                    }
-
-                    camera.target = new BABYLON.Vector3(ball.position.x, ball.position.y, 0);
-                });
-
-                function respawnPlayer() {
-                    sound.playHurt();
-                    lives--;
-                    document.getElementById("lives-val").innerText = lives;
-                    if (lives <= 0) {
-                        alert("💀 Game Over! Restarting Campaign.");
-                        lives = 3; currentLevel = 1;
-                        document.getElementById("lives-val").innerText = lives;
-                        buildLevel(currentLevel);
-                    }
-                    ball.position = new BABYLON.Vector3(1, 3, 0);
-                    velocityX = 0; velocityY = 0;
+            document.addEventListener('fullscreenchange', () => {
+                if (document.fullscreenElement) {
+                    fullscreenIcon.className = 'ph-bold ph-corners-in text-xl';
+                    playerContainer.classList.remove('rounded-2xl', 'aspect-video');
+                } else {
+                    fullscreenIcon.className = 'ph-bold ph-corners-out text-xl';
+                    playerContainer.classList.add('rounded-2xl', 'aspect-video');
                 }
+            });
 
-                return scene;
-            };
+            function resetIdleTimer() {
+                clearTimeout(controlsTimeout);
+                playerContainer.classList.remove('hide-cursor');
+                if(!video.paused) {
+                    controlsTimeout = setTimeout(() => {
+                        playerContainer.classList.add('hide-cursor');
+                    }, 3000);
+                }
+            }
 
-            const scene = createScene();
-            engine.runRenderLoop(() => { scene.render(); });
-            window.addEventListener("resize", () => { engine.resize(); });
-        }
+            playerContainer.addEventListener('mousemove', resetIdleTimer);
+            playerContainer.addEventListener('mouseleave', () => {
+                if(!video.paused) playerContainer.classList.add('hide-cursor');
+            });
+
+            // Keyboard Shortcuts
+            document.addEventListener('keydown', (e) => {
+                // Ignore shortcuts if typing in input
+                if (document.activeElement === urlInput) return;
+
+                switch(e.key.toLowerCase()) {
+                    case ' ':
+                    case 'k':
+                        e.preventDefault();
+                        togglePlay();
+                        break;
+                    case 'f':
+                        e.preventDefault();
+                        toggleFullscreen();
+                        break;
+                    case 'm':
+                        e.preventDefault();
+                        muteBtn.click();
+                        break;
+                    case 'arrowright':
+                        e.preventDefault();
+                        video.currentTime = Math.min(video.currentTime + 5, video.duration);
+                        break;
+                    case 'arrowleft':
+                        e.preventDefault();
+                        video.currentTime = Math.max(video.currentTime - 5, 0);
+                        break;
+                }
+            });
+
+            // Helpers
+            function showLoading() {
+                loadingSpinner.classList.remove('hidden');
+            }
+            
+            function hideLoading() {
+                loadingSpinner.classList.add('hidden');
+            }
+
+            function showError(msg) {
+                errorMessage.classList.remove('hidden');
+                errorText.textContent = msg;
+            }
+
+            function hideError() {
+                errorMessage.classList.add('hidden');
+            }
+
+            function resetPlayerState() {
+                progressBar.value = 0;
+                progressFill.style.width = '0%';
+                bufferBar.style.width = '0%';
+                currentTimeEl.textContent = '00:00';
+                durationEl.textContent = '00:00';
+                playIcon.className = 'ph-fill ph-play text-2xl';
+                controls.classList.remove('active');
+            }
+        });
     </script>
 </body>
 </html>
+```
