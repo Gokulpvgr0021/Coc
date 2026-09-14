@@ -3,7 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Red Ball Ultimate - Hardcore Edition</title>
+    <title>Red Ball Ultimate - Hardcore</title>
+    
+    <!-- PWA Web App Manifest Configuration for Home Screen Install -->
+    <link rel="manifest" href='data:application/manifest+json,{
+        "name": "Red Ball Ultimate Hardcore",
+        "short_name": "RedBall",
+        "start_url": "./index.html",
+        "display": "fullscreen",
+        "background_color": "#0f172a",
+        "theme_color": "#0f172a",
+        "icons": [
+            {
+                "src": "https://img.icons8.com/color/512/red-circle.png",
+                "sizes": "512x512",
+                "type": "image/png"
+            }
+        ]
+    }'>
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
     <!-- Babylon.js & GUI Library -->
     <script src="https://cdn.babylonjs.com/babylon.js"></script>
     <script src="https://cdn.babylonjs.com/gui/babylon.gui.min.js"></script>
@@ -45,7 +66,7 @@
         .hud-panel {
             background: rgba(15, 23, 42, 0.9);
             border: 2px solid rgba(239, 68, 68, 0.8);
-            padding: 6px 14px;
+            padding: 6px 12px;
             border-radius: 8px;
             color: #ffffff;
             font-size: 11px;
@@ -57,8 +78,8 @@
         .hud-panel span {
             color: #f43f5e;
         }
-        #download-btn {
-            background: linear-gradient(135deg, #e11d48, #f43f5e);
+        #install-btn {
+            background: linear-gradient(135deg, #10b981, #059669);
             color: white;
             border: none;
             padding: 6px 12px;
@@ -66,7 +87,7 @@
             font-weight: 900;
             font-size: 10px;
             cursor: pointer;
-            box-shadow: 0 4px 12px rgba(225, 29, 72, 0.4);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
             pointer-events: auto;
         }
     </style>
@@ -76,22 +97,33 @@
     <div id="hud-overlay">
         <div class="hud-panel">LVL: <span id="level-val">1</span>/5 | LIVES: <span id="lives-val">3</span></div>
         <div class="hud-panel">STARS: <span id="stars-val">0</span>/<span id="max-stars-val">3</span></div>
-        <button id="download-btn" onclick="triggerAppDownload()">📲 DOWNLOAD</button>
+        <button id="install-btn" onclick="installApp()">📥 ADD TO HOME</button>
     </div>
 
     <canvas id="renderCanvas"></canvas>
 
     <script>
-        function triggerAppDownload() {
-            alert("App Installer Package initialized! Adding Red Ball Hardcore shortcut to your home screen.");
-            const appBlob = new Blob([document.documentElement.outerHTML], { type: 'text/html' });
-            const url = URL.createObjectURL(appBlob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'RedBallHardcore.html';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
+        // --- Native PWA Home Screen Prompt Handler ---
+        let deferredInstallPrompt = null;
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredInstallPrompt = e;
+            document.getElementById("install-btn").style.display = "block";
+        });
+
+        function installApp() {
+            if (deferredInstallPrompt) {
+                deferredInstallPrompt.prompt();
+                deferredInstallPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        console.log('User accepted the home screen install prompt');
+                    }
+                    deferredInstallPrompt = null;
+                });
+            } else {
+                alert("To add this game to your home screen:\n\n📱 Android (Chrome): Tap the browser menu (3 dots) and select 'Install app' or 'Add to Home screen'.\n\n🍎 iPhone (Safari): Tap the Share button at the bottom and select 'Add to Home Screen'.");
+            }
         }
 
         // --- Web Audio Retro Synthesizer Engine ---
@@ -177,15 +209,13 @@
                 dirLight.position = new BABYLON.Vector3(10, 25, -10);
                 dirLight.intensity = 1.0;
 
-                // Game Arrays storing objects with explicit data for collision checks
-                let platforms = []; // {mesh, minX, maxX, minY, maxY}
-                let hazards = [];   // meshes
-                let stars = [];     // meshes
+                let platforms = [];
+                let hazards = [];
+                let stars = [];
                 let goalGate = null;
                 let dynamicElements = [];
 
                 function buildLevel(lvl) {
-                    // Cleanup
                     platforms.forEach(p => p.mesh.dispose());
                     hazards.forEach(h => h.dispose());
                     stars.forEach(s => s.dispose());
@@ -199,7 +229,6 @@
                     document.getElementById("stars-val").innerText = starsCollected;
                     document.getElementById("level-val").innerText = lvl;
 
-                    // Build platform segments with gaps
                     let curX = 0;
                     while (curX < stageLength) {
                         let platWidth = 4 + Math.random() * 3;
@@ -215,7 +244,6 @@
 
                         platforms.push({ mesh: ground, minX: pMinX, maxX: pMaxX, y: pY + 0.6 });
 
-                        // Level spikes
                         if (lvl >= 2 && curX > 4 && Math.random() > 0.4) {
                             let spike = BABYLON.MeshBuilder.CreateCylinder("spike", { diameterTop: 0, diameterBottom: 0.8, height: 1.0, tessellation: 4 }, scene);
                             spike.position = new BABYLON.Vector3((pMinX + pMaxX) / 2, -0.1, 0);
@@ -227,7 +255,6 @@
                         curX += platWidth + (1.8 + lvl * 0.6);
                     }
 
-                    // Level specific obstacles
                     if (lvl >= 2) {
                         let blade = BABYLON.MeshBuilder.CreateDisc("blade", { radius: 1.0, tessellation: 16 }, scene);
                         blade.position = new BABYLON.Vector3(12, 1.5, 0);
@@ -255,7 +282,6 @@
                         dynamicElements.push({ mesh: crusher, type: "crush", originX: 32, range: 2.5, speed: 0.045 });
                     }
 
-                    // Stars placement
                     for (let s = 0; s < totalLevelStars; s++) {
                         let star = BABYLON.MeshBuilder.CreateSphere("star" + s, { diameter: 0.8 }, scene);
                         let sX = 6 + (s * (stageLength / (totalLevelStars + 1)));
@@ -265,7 +291,6 @@
                         stars.push(star);
                     }
 
-                    // Gate
                     goalGate = BABYLON.MeshBuilder.CreateBox("gate", { width: 1, height: 4, depth: 0.8 }, scene);
                     goalGate.position = new BABYLON.Vector3(stageLength - 2, 1.5, 0);
                     let gm = new BABYLON.StandardMaterial("gMat", scene); gm.emissiveColor = new BABYLON.Color3(0.1, 0.9, 0.2);
@@ -279,7 +304,6 @@
                 ballMat.diffuseColor = new BABYLON.Color3(0.95, 0.15, 0.15);
                 ball.material = ballMat;
 
-                // Eyes
                 let eyeL = BABYLON.MeshBuilder.CreateBox("eL", { width: 0.2, height: 0.25, depth: 0.15 }, scene);
                 eyeL.position = new BABYLON.Vector3(-0.2, 0.2, 0.45); eyeL.parent = ball;
                 let eyeR = BABYLON.MeshBuilder.CreateBox("eR", { width: 0.2, height: 0.25, depth: 0.15 }, scene);
@@ -289,13 +313,11 @@
 
                 buildLevel(currentLevel);
 
-                // Physics state
                 let moveDir = 0;
                 let velocityY = 0;
                 let velocityX = 0;
                 let isGrounded = false;
 
-                // --- Touch GUI Layout ---
                 const advancedTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
 
                 let btnLeft = BABYLON.GUI.Button.CreateSimpleButton("l", "◀");
@@ -325,7 +347,6 @@
                     if (isGrounded) { velocityY = 0.25; isGrounded = false; sound.playJump(); }
                 });
 
-                // Keyboard support
                 window.addEventListener("keydown", (e) => {
                     if (e.key === "ArrowLeft" || e.key === "a") moveDir = -1;
                     if (e.key === "ArrowRight" || e.key === "d") moveDir = 1;
@@ -336,9 +357,7 @@
                     if ((e.key === "ArrowRight" || e.key === "d") && moveDir === 1) moveDir = 0;
                 });
 
-                // --- Game Loop ---
                 scene.registerBeforeRender(() => {
-                    // Momentum
                     if (moveDir !== 0) {
                         velocityX += moveDir * 0.015;
                         velocityX = Math.max(-0.15, Math.min(0.15, velocityX));
@@ -348,11 +367,9 @@
                     }
                     ball.position.x += velocityX;
 
-                    // Gravity
                     velocityY -= 0.012;
                     ball.position.y += velocityY;
 
-                    // Moving hazards
                     let time = Date.now() * 0.003;
                     dynamicElements.forEach(item => {
                         if (item.type === "saw") {
@@ -365,7 +382,6 @@
                         }
                     });
 
-                    // Explicit platform collision logic
                     let wasGrounded = false;
                     platforms.forEach(p => {
                         if (ball.position.x >= p.minX - 0.2 && ball.position.x <= p.maxX + 0.2) {
@@ -378,19 +394,16 @@
                     });
                     isGrounded = wasGrounded;
 
-                    // Hazards collision
                     hazards.forEach(h => {
                         if (BABYLON.Vector3.Distance(ball.position, h.position) < 1.0) {
                             respawnPlayer();
                         }
                     });
 
-                    // Fall off stage
                     if (ball.position.y < -5) {
                         respawnPlayer();
                     }
 
-                    // Stars collection
                     stars.forEach((star, idx) => {
                         if (star && BABYLON.Vector3.Distance(ball.position, star.position) < 1.1) {
                             star.dispose();
@@ -401,7 +414,6 @@
                         }
                     });
 
-                    // Gate check
                     if (goalGate && BABYLON.Vector3.Distance(ball.position, goalGate.position) < 1.3) {
                         if (starsCollected >= totalLevelStars) {
                             sound.playWin();
@@ -416,11 +428,10 @@
                             buildLevel(currentLevel);
                             ball.position = new BABYLON.Vector3(1, 3, 0);
                         } else {
-                            ball.position.x -= 0.4; // Blocked until all stars are gathered
+                            ball.position.x -= 0.4;
                         }
                     }
 
-                    // Camera follow
                     camera.target = new BABYLON.Vector3(ball.position.x, ball.position.y, 0);
                 });
 
