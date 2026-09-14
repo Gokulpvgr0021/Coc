@@ -274,47 +274,57 @@
 
                 // Movement Joystick (Left)
                 let moveJoyBase = new BABYLON.GUI.Ellipse("moveBase");
-                moveJoyBase.width = "120px";
-                moveJoyBase.height = "120px";
-                moveJoyBase.left = "35px";
-                moveJoyBase.bottom = "35px";
-                moveJoyBase.color = "rgba(255, 255, 255, 0.25)";
+                moveJoyBase.width = "140px";
+                moveJoyBase.height = "140px";
+                moveJoyBase.left = "40px";
+                moveJoyBase.bottom = "40px";
+                moveJoyBase.color = "rgba(255, 255, 255, 0.3)";
                 moveJoyBase.thickness = 3;
                 moveJoyBase.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
                 moveJoyBase.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
                 advancedTexture.addControl(moveJoyBase);
 
                 let moveJoyThumb = new BABYLON.GUI.Ellipse("moveThumb");
-                moveJoyThumb.width = "50px";
-                moveJoyThumb.height = "50px";
-                moveJoyThumb.color = "rgba(56, 189, 248, 0.8)";
-                moveJoyThumb.background = "rgba(56, 189, 248, 0.4)";
+                moveJoyThumb.width = "60px";
+                moveJoyThumb.height = "60px";
+                moveJoyThumb.color = "rgba(56, 189, 248, 0.9)";
+                moveJoyThumb.background = "rgba(56, 189, 248, 0.5)";
                 moveJoyBase.addControl(moveJoyThumb);
 
                 let isMoving = false;
                 let moveTouchId = null;
                 let moveVector = new BABYLON.Vector3(0, 0, 0);
 
-                moveJoyBase.onPointerDownObservable.add((args) => {
+                // Robust touch capture handling for left joystick
+                moveJoyBase.pointerDownRegistry.add((addInfo) => {
                     isMoving = true;
-                    moveTouchId = args.pointerId;
+                    moveTouchId = addInfo.pointerId;
                 });
 
                 scene.onPointerObservable.add((pointerInfo) => {
-                    if (isMoving && pointerInfo.event.pointerId === moveTouchId) {
-                        if (pointerInfo.type === BABYLON.PointerEventTypes.POINTERUP) {
+                    if (pointerInfo.type === BABYLON.PointerEventTypes.POINTERDOWN) {
+                        // Check if touch is within left side of screen (joystick area)
+                        if (pointerInfo.event.clientX < window.innerWidth / 2 && !isMoving) {
+                            isMoving = true;
+                            moveTouchId = pointerInfo.event.pointerId;
+                        }
+                    } else if (pointerInfo.type === BABYLON.PointerEventTypes.POINTERUP) {
+                        if (pointerInfo.event.pointerId === moveTouchId) {
                             isMoving = false;
+                            moveTouchId = null;
                             moveJoyThumb.left = 0;
                             moveJoyThumb.top = 0;
                             moveVector.set(0, 0, 0);
-                        } else if (pointerInfo.type === BABYLON.PointerEventTypes.POINTERMOVE) {
-                            let rect = moveJoyBase._domElement.getBoundingClientRect();
+                        }
+                    } else if (pointerInfo.type === BABYLON.PointerEventTypes.POINTERMOVE) {
+                        if (isMoving && pointerInfo.event.pointerId === moveTouchId) {
+                            let rect = moveJoyBase._domElement ? moveJoyBase._domElement.getBoundingClientRect() : { left: 40, top: window.innerHeight - 180, width: 140, height: 140 };
                             let centerX = rect.left + rect.width / 2;
                             let centerY = rect.top + rect.height / 2;
                             let dx = pointerInfo.event.clientX - centerX;
                             let dy = pointerInfo.event.clientY - centerY;
                             let dist = Math.sqrt(dx * dx + dy * dy);
-                            let maxDist = 35;
+                            let maxDist = 45;
 
                             if (dist > maxDist) {
                                 dx = (dx / dist) * maxDist;
@@ -334,7 +344,7 @@
                 fireButton.width = "85px";
                 fireButton.height = "85px";
                 fireButton.color = "white";
-                fireButton.background = "rgba(239, 68, 68, 0.8)";
+                fireButton.background = "rgba(239, 68, 68, 0.85)";
                 fireButton.cornerRadius = 42;
                 fireButton.thickness = 3;
                 fireButton.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_RIGHT;
@@ -400,7 +410,6 @@
                 glooButton.thickness = 2;
                 glooButton.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_RIGHT;
                 glooButton.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
-                slotButton.left = "-130px";
                 glooButton.left = "-130px";
                 glooButton.bottom = "-105px";
                 advancedTexture.addControl(glooButton);
@@ -420,7 +429,7 @@
                 // Main Render Loop
                 scene.registerBeforeRender(() => {
                     if (moveVector.length() > 0) {
-                        let speed = 0.11;
+                        let speed = 0.12;
                         let moveDir = new BABYLON.Vector3(moveVector.x, 0, moveVector.z);
                         player.moveWithCollisions(moveDir.scale(speed));
                         
